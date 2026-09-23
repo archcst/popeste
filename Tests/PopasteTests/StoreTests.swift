@@ -86,6 +86,18 @@ final class StoreTests {
             let frame = PickerPlacement.frame(caret: nil, mouse: CGPoint(x: 100, y: 800), visibleScreen: CGRect(x: 0, y: 0, width: 1400, height: 1000), desiredSize: CGSize(width: 480*size.scale, height: 424*size.scale))
             XCTAssertEqual(frame.width, 480*size.scale); XCTAssertEqual(frame.height, 424*size.scale)
         }
+        XCTAssertEqual(config.value.resolvedLanguage, Preferences.resolveLanguage(nil))
+        XCTAssertEqual(Preferences.resolveLanguage(nil, preferred: ["ja-JP"]), "ja")
+        XCTAssertEqual(Preferences.resolveLanguage("system", preferred: ["zh-TW"]), "zh-Hant")
+        XCTAssertEqual(Preferences.resolveLanguage(nil, preferred: ["zh-Hans-HK"]), "zh-Hans")
+        XCTAssertEqual(Preferences.resolveLanguage(nil, preferred: ["pt-BR", "de-DE"]), "de")
+        XCTAssertEqual(Preferences.resolveLanguage(nil, preferred: ["ar"]), "en")
+        for language in Preferences.supportedLanguages + ["system"] {
+            try config.update { $0.language = language }
+            let reloaded = try Configuration(directory: destination, legacy: defaults)
+            XCTAssertEqual(reloaded.value.language, language)
+            if language != "system" { XCTAssertEqual(reloaded.value.resolvedLanguage, language) }
+        }
         let permission = try FileManager.default.attributesOfItem(atPath: config.url.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(permission?.intValue, 0o600)
         try Data("broken".utf8).write(to: config.url)

@@ -8,29 +8,456 @@
 body.dark{--paper:#242628;--ink:#e8eaec;--muted:#989da3;--line:#36393c;--hover:#2d3033;--selected:#383c40;--black:#f3f4f5;--stage:#17191b}
 body{margin:0;background:var(--stage);color:var(--ink);font:14px -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}button,input,textarea,select{font:inherit;color:inherit}button{border:0;background:none;cursor:pointer}button:hover{background:var(--hover)}button:focus-visible,select:focus-visible{outline:2px solid #979da4;outline-offset:2px}input,textarea{outline:0}button:disabled{opacity:.35;cursor:default}
 .board{max-width:1080px;margin:auto;padding:36px}.mast{display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-size:19px;font-weight:600;letter-spacing:-.5px}.badge{font-size:12px;font-weight:400;color:var(--muted);margin-left:12px}.modes{display:flex;gap:3px;padding:4px;border:1px solid #dce0e3;border-radius:11px}.modes button{padding:7px 14px;font-size:12px;border-radius:7px;color:var(--muted)}.modes button.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px #00000008}
-.stage{min-height:610px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px}.frame{zoom:var(--scale)}.window{width:480px;height:424px;display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--line);border-radius:19px;box-shadow:0 18px 60px #202b3918,0 2px 6px #00000005;overflow:hidden;position:relative}.head{height:57px;display:flex;align-items:center;gap:11px;padding:0 17px;border-bottom:1px solid var(--line);flex-shrink:0}.head input{width:100%;flex:1;min-width:0;border:0;background:none;font-size:14px}.head input::placeholder,textarea::placeholder{color:var(--muted)}.head strong{font-weight:500;font-size:14px}.spacer{flex:1}.icon{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.muted{color:var(--muted)}.iconbutton{display:grid;place-items:center;border-radius:7px;width:29px;height:29px;padding:0;color:var(--muted)}kbd{background:var(--hover);border-radius:4px;padding:3px 5px;font:10px -apple-system,sans-serif;color:var(--muted)}
-.page{display:none;min-height:0;flex:1;flex-direction:column}.page.active{display:flex}.list{flex:1;min-height:0;overflow:auto;padding:7px}.row{width:100%;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;text-align:left;padding:11px 12px;line-height:20px;border-radius:10px;font-size:14px;font-weight:400}.row.selected{background:var(--selected)}.empty{padding:42px 12px;text-align:center;color:var(--muted);font-size:13px}.footer{height:45px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 12px;border-top:1px solid var(--line)}.hint{font-size:10px;color:var(--muted)}.textbutton{padding:6px 9px;font-size:12px;border-radius:6px;color:var(--muted)}.primary{background:var(--black);color:var(--paper);padding:7px 15px;font-size:12px;border-radius:8px}.primary:hover{background:var(--black);opacity:.85}
+.stage{min-height:610px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:30px}.frame{zoom:var(--scale)}.window{width:480px;height:424px;display:flex;flex-direction:column;background:var(--paper);border:0;border-radius:19px;box-shadow:0 18px 60px #202b3918,0 2px 6px #00000005;overflow:hidden;position:relative}.head{height:57px;display:flex;align-items:center;gap:11px;padding:0 17px;border-bottom:1px solid var(--line);flex-shrink:0}.head input{width:100%;flex:1;min-width:0;border:0;background:none;font-size:14px}.head input::placeholder,textarea::placeholder{color:var(--muted)}.head strong{font-weight:500;font-size:14px}.spacer{flex:1}.icon{width:17px;height:17px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.muted{color:var(--muted)}.iconbutton{display:grid;place-items:center;border-radius:7px;width:29px;height:29px;padding:0;color:var(--muted)}kbd{background:var(--hover);border-radius:4px;padding:3px 5px;font:10px -apple-system,sans-serif;color:var(--muted)}
+.page{display:none;min-height:0;flex:1;flex-direction:column}.page.active{display:flex}.list{flex:1;min-height:0;overflow:auto;padding:7px}.row{width:100%;display:block;white-space:nowrap;text-overflow:clip;overflow:hidden;text-align:left;padding:11px 12px;line-height:20px;border-radius:10px;font-size:14px;font-weight:400}.row.selected{background:var(--selected)}.empty{padding:42px 12px;text-align:center;color:var(--muted);font-size:13px}.footer{height:45px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 12px;border-top:1px solid var(--line)}.hint{font-size:10px;color:var(--muted)}.textbutton{padding:6px 9px;font-size:12px;border-radius:6px;color:var(--muted)}.primary{background:var(--black);color:var(--paper);padding:7px 15px;font-size:12px;border-radius:8px}.primary:hover{background:var(--black);opacity:.85}
 .editor{flex:1;display:flex;min-height:0;padding:15px 18px 10px;flex-direction:column;gap:8px}.editor textarea{flex:1;min-height:0;resize:none;border:0;background:transparent;padding:0;font-size:14px;line-height:1.9}.editor-meta{display:flex;align-items:center;font-size:10px;color:var(--muted);gap:8px}.pin{display:flex;align-items:center;gap:5px;border-radius:6px;padding:5px 6px;font-size:11px}.pin[aria-pressed=true]{background:var(--selected);color:var(--ink)}.danger:hover{color:#c14d49}.settings{padding:0 18px;overflow:auto;flex:1}.setting{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:46px;border-bottom:1px solid var(--line);font-size:13px}.setting:last-child{border-bottom:0}.shortcut{padding:5px 10px;border:1px solid var(--line);border-radius:7px;font-size:12px;min-width:56px}.segments{display:flex;background:var(--hover);padding:3px;border-radius:7px;gap:2px}.segments button{padding:4px 11px;border-radius:5px;font-size:11px;color:var(--muted)}.segments button[aria-pressed=true]{background:var(--paper);box-shadow:0 1px 3px #0000000b;color:var(--ink)}select{background:var(--paper);border:0;font-size:12px;max-width:115px}.toggle{width:30px;height:18px;border-radius:20px;background:#d3d6d9;padding:2px;display:flex;align-items:center}.toggle i{width:14px;height:14px;border-radius:50%;background:white;box-shadow:0 1px 2px #0002}.toggle[aria-checked=true]{background:var(--black);justify-content:flex-end}.dark .toggle[aria-checked=true] i{background:#252628}.permission{font-size:11px;color:#709580;display:flex;align-items:center;gap:7px}.permission:before{content:'';width:5px;height:5px;background:currentColor;border-radius:50%}.storage{padding:10px 0;color:var(--muted);font-size:10px;display:flex;align-items:center;gap:10px}.backup{display:flex;gap:3px}.subtle{font-size:11px;color:var(--muted)}.caption{text-align:center;max-width:440px;font-size:12px;line-height:1.9;color:#858b91}.caption strong{font-weight:500;color:var(--ink)}.legend{display:flex;justify-content:space-between;border-top:1px solid #dce0e3;padding-top:18px;font-size:11px;color:#92989e;gap:16px}.toast{position:absolute;bottom:55px;left:50%;transform:translateX(-50%);padding:8px 12px;border-radius:8px;background:var(--black);color:var(--paper);font-size:11px;white-space:nowrap;pointer-events:none;opacity:0}.toast.show{opacity:1}.confirm{position:absolute;inset:0;background:#0002;display:grid;place-items:center;padding:30px}.confirm[hidden]{display:none}.dialog{padding:22px;background:var(--paper);border:1px solid var(--line);border-radius:14px;width:100%;box-shadow:0 10px 30px #0001}.dialog p{font-size:12px;color:var(--muted);line-height:1.7}.dialog-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:20px}@media(max-width:620px){.board{padding:22px 12px}.mast{align-items:flex-start;flex-direction:column}.stage{min-height:540px}.legend{flex-direction:column}.frame{max-width:100%}.window{max-width:calc((100vw - 30px) / var(--scale))}.badge{font-size:11px}.caption{padding:0 12px}}
+
+.prompt-row{position:relative;display:flex;align-items:center;border-radius:10px;min-width:0}
+.prompt-row.selected{background:var(--selected)}.prompt-row:hover{background:var(--hover)}.prompt-row.selected:hover{background:var(--selected)}
+.prompt-row .row{flex:1;min-width:0;width:auto;background:transparent}
+.prompt-row .row.overflowing{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 44px),transparent calc(100% - 10px));mask-image:linear-gradient(to right,#000 calc(100% - 44px),transparent calc(100% - 10px))}
+.row-edit{position:absolute;right:7px;top:50%;transform:translateY(-50%);z-index:1;background:var(--paper);opacity:0;pointer-events:none}
+.prompt-row:hover .row-edit,.prompt-row:focus-within .row-edit{opacity:1;pointer-events:auto}
+.row-edit:hover{background:var(--paper)}
+.empty button{display:block;margin:15px auto 0}
+@supports (corner-shape: superellipse(2)){.window{corner-shape:superellipse(2)}}
+#list > .footer{position:relative}.footer-shortcuts{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;pointer-events:none}
+
+.select-control{display:flex;align-items:center;gap:9px;border:0;background:transparent;padding:6px 8px;border-radius:7px;font-size:12px;white-space:nowrap}
+.select-control .chevron{width:12px;height:12px;color:var(--muted)}
+.setting{position:relative}.setting-menu{position:absolute;right:0;top:calc(100% - 3px);z-index:10;min-width:138px;max-height:230px;overflow-y:auto;padding:4px;background:var(--paper);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 20px #0002}
+.setting-menu[hidden]{display:none}.setting-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:5px;font-size:12px}
+.config-label{display:flex;align-items:center;gap:12px;min-width:0}.config-path{font-size:11px;color:var(--muted);white-space:nowrap}.config-row{gap:6px}
+#settings .setting{min-height:45px}#settingsButton .icon{width:18px;height:18px}
 
 html,body{width:100%;height:100%;overflow:hidden;background:transparent}
 .board{margin:0;padding:0;max-width:none}.mast,.caption,.legend{display:none!important}
 .stage{display:block;min-height:0}.frame{zoom:var(--scale,1);max-width:none}
-.window{width:calc(100vw / var(--scale,1));height:calc(100vh / var(--scale,1));max-width:none;box-shadow:none}
-.theme-menu{position:absolute;right:17px;top:186px;z-index:5;width:130px;padding:4px;background:var(--paper);border:1px solid var(--line);border-radius:9px;box-shadow:0 6px 20px #0002}.theme-menu[hidden]{display:none}.theme-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:5px;font-size:12px}
+.window{width:calc(100vw / var(--scale,1));height:calc(100vh / var(--scale,1));max-width:none;box-shadow:none;border-radius:0}
 #previewBody{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;padding:15px 18px;overflow:auto;flex:1;font-size:14px}
 </style>
-<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="icon-back" viewBox="0 0 24 24"><path d="m10 5-7 7 7 7M3 12h17"/></symbol><symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="icon-edit" viewBox="0 0 24 24"><path d="m14 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol><symbol id="icon-gear" viewBox="0 0 24 24"><path d="m10 3-1 3-3 1-2 4 2 3v3l4 1 2 3 3-3 4-1v-3l2-3-2-4-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="icon-pin" viewBox="0 0 24 24"><path d="M8 3h8l-1 7 3 4H6l3-4zM12 14v7"/></symbol><symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol></svg>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="icon-back" viewBox="0 0 24 24"><path d="m10 5-7 7 7 7M3 12h17"/></symbol><symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="icon-edit" viewBox="0 0 24 24"><path d="m14 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol><symbol id="icon-gear" viewBox="0 0 24 24"><path d="M4 7h4m4 0h8M4 17h8m4 0h4"/><circle cx="10" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></symbol><symbol id="icon-pin" viewBox="0 0 24 24"><path d="M8 3h8l-1 7 3 4H6l3-4zM12 14v7"/></symbol><symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol></svg>
 <div class="board">
 <header class="mast"><div class="brand">Popaste <span class="badge">紧凑浮窗 · 设计预览</span></div><nav class="modes" aria-label="预览状态"><button data-mode="list" class="active">提示词</button><button data-mode="editor">编辑</button><button data-mode="settings">设置</button></nav></header>
 <main class="stage"><div class="frame"><section class="window" aria-label="Popaste 浮窗">
-<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索提示词…" aria-label="搜索提示词" spellcheck="false"><kbd>esc</kbd></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建提示词" title="新建提示词"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="spacer"></span><span class="hint">⌃N/P 选择 · ↵ 插入</span><button class="iconbutton" id="edit" title="编辑所选提示词" aria-label="编辑所选提示词"><svg class="icon"><use href="#icon-edit"/></svg></button><button class="iconbutton" id="settingsButton" title="设置" aria-label="设置"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
+<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索短语" aria-label="搜索短语" spellcheck="false"></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建提示词" title="新建提示词（⌘N）"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="footer-shortcuts hint">⌘N 新建 · ⌘E 编辑 · ↵ 插入</span><span class="spacer"></span><button class="iconbutton" id="settingsButton" aria-label="设置" title="设置（⌘,）"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
 <div id="editor" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回提示词"><svg class="icon"><use href="#icon-back"/></svg></button><strong id="editorHeading">编辑提示词</strong><span class="spacer"></span><button class="pin" id="pin" aria-pressed="false"><svg class="icon" style="width:13px;height:13px"><use href="#icon-pin"/></svg>置顶</button></header><div class="editor"><textarea id="body" placeholder="输入提示词正文…" aria-label="提示词正文" spellcheck="false"></textarea><div class="editor-meta"><span id="characters"></span><span class="spacer"></span><span id="saveState">已保存</span></div></div><footer class="footer"><button class="iconbutton danger" id="delete" aria-label="删除提示词"><svg class="icon"><use href="#icon-trash"/></svg></button><span class="spacer"></span><span class="hint">⌘S 保存</span><button class="textbutton" data-back>取消</button><button class="primary" id="save">保存</button></footer></div>
-<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回提示词"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>呼出快捷键</span><button class="shortcut" id="shortcut">⌥ A</button></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting"><span>提示词备份</span><div class="backup"><button class="textbutton" id="import">导入</button><button class="textbutton" id="export">导出</button></div></div><div class="storage"><span>本地存储</span><span>~/.config/popeste</span></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
+<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回提示词"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>语言</span><select id="language" aria-label="语言"><option value="system">跟随系统</option><option value="zh-Hans">简体中文</option><option value="en">English</option></select></div><div class="setting"><span>呼出快捷键</span><button class="shortcut" id="shortcut">⌥ A</button></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting config-row"><div class="config-label"><span>配置文件</span><span class="config-path">~/.config/popeste</span></div><button class="textbutton" id="openDirectory">打开</button></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
 <div class="toast" id="toast" role="status"></div><div class="confirm" id="confirm" hidden><div class="dialog"><strong id="dialogTitle"></strong><p id="dialogText"></p><div class="dialog-actions"><button class="textbutton" id="stay">继续编辑</button><button class="primary" id="accept">放弃修改</button></div></div></div>
-</section></div><div class="caption" id="caption"><strong>一个浮窗，完成常用操作。</strong><br>点底部 ＋ 新建，铅笔编辑，齿轮进入设置。</div></main><footer class="legend"><span>点击浮窗内的按钮体验 · 列表每行直接显示正文</span><span>交互设计稿 · 示例数据仅在本页有效</span></footer>
+</section></div><div class="caption" id="caption"><strong>一个浮窗，完成常用操作。</strong><br>⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置</div></main><footer class="legend"><span>点击浮窗内的按钮体验 · 列表每行直接显示正文</span><span>交互设计稿 · 示例数据仅在本页有效</span></footer>
 </div>
 
-<script>// Keep marked IME text out of every filtering path, including background refreshes.
+
+<script>let interfaceLanguage = 'zh-Hans';
+const englishText = {
+ '搜索短语':'Search phrases','搜索提示词':'Search prompts','新建提示词':'New prompt','新建提示词（⌘N）':'New prompt (⌘N)',
+ '编辑提示词':'Edit prompt','编辑提示词（⌘E）':'Edit prompt (⌘E)','设置':'Settings','设置（⌘,）':'Settings (⌘,)',
+ '返回提示词':'Back to prompts','提示词正文':'Prompt text','输入提示词正文…':'Enter prompt text…','置顶':'Pin',
+ '删除提示词':'Delete prompt','取消':'Cancel','保存':'Save','⌘S 保存':'⌘S Save','完成':'Done','更改后自动保存':'Changes save automatically',
+ '呼出快捷键':'Shortcut','浮窗大小':'Window size','小':'S','中':'M','大':'L','外观':'Appearance','语言':'Language',
+ '跟随系统':'System','浅色':'Light','深色':'Dark','登录时启动':'Launch at login','辅助功能权限':'Accessibility',
+ '配置文件':'Configuration','打开':'Open','已授权 ›':'Allowed ›','去授权 ›':'Allow access ›','请在系统设置中批准登录项':'Approve the login item in System Settings',
+ '⌘N 新建 · ⌘E 编辑 · ↵ 插入':'⌘N New · ⌘E Edit · ↵ Insert',
+ '没有匹配的提示词':'No matching prompts','还没有提示词':'No prompts yet',' 条':' prompts',' 字符':' characters',
+ '已保存':'Saved','未保存':'Unsaved','已删除':'Deleted','请输入提示词正文':'Enter prompt text first',
+ '放弃未保存的修改？':'Discard unsaved changes?','当前修改尚未保存。':'Your changes have not been saved.',
+ '放弃修改':'Discard','继续编辑':'Keep editing','删除这条提示词？':'Delete this prompt?','删除后无法恢复。':'This cannot be undone.','删除':'Delete',
+ '按下组合键…':'Press shortcut…','请包含 ⌘ / ⌃ / ⌥':'Include ⌘ / ⌃ / ⌥','提示词':'Prompt','⌃B 返回':'⌃B Back','纯文本':'Plain text','编辑':'Edit','插入':'Insert'
+};
+const translatedText = {
+ "zh-Hant": {
+  "搜索短语": "搜尋短語",
+  "搜索提示词": "搜尋提示詞",
+  "新建提示词": "新增提示詞",
+  "编辑提示词": "編輯提示詞",
+  "设置": "設定",
+  "返回提示词": "返回提示詞",
+  "提示词正文": "提示詞內容",
+  "输入提示词正文…": "輸入提示詞內容…",
+  "置顶": "置頂",
+  "删除提示词": "刪除提示詞",
+  "取消": "取消",
+  "保存": "儲存",
+  "完成": "完成",
+  "更改后自动保存": "變更後自動儲存",
+  "呼出快捷键": "叫出快捷鍵",
+  "浮窗大小": "浮窗大小",
+  "小": "小",
+  "中": "中",
+  "大": "大",
+  "外观": "外觀",
+  "语言": "語言",
+  "跟随系统": "跟隨系統",
+  "浅色": "淺色",
+  "深色": "深色",
+  "登录时启动": "登入時啟動",
+  "辅助功能权限": "輔助使用權限",
+  "配置文件": "設定檔",
+  "打开": "開啟",
+  "已授权 ›": "已授權 ›",
+  "去授权 ›": "前往授權 ›",
+  "请在系统设置中批准登录项": "請在系統設定中核准登入項目",
+  "没有匹配的提示词": "沒有符合的提示詞",
+  "还没有提示词": "尚無提示詞",
+  " 条": " 條",
+  " 字符": " 字元",
+  "已保存": "已儲存",
+  "未保存": "未儲存",
+  "已删除": "已刪除",
+  "请输入提示词正文": "請先輸入提示詞內容",
+  "放弃未保存的修改？": "捨棄未儲存的變更？",
+  "当前修改尚未保存。": "目前變更尚未儲存。",
+  "放弃修改": "捨棄變更",
+  "继续编辑": "繼續編輯",
+  "删除这条提示词？": "刪除此提示詞？",
+  "删除后无法恢复。": "刪除後無法復原。",
+  "删除": "刪除",
+  "按下组合键…": "按下組合鍵…",
+  "请包含 ⌘ / ⌃ / ⌥": "請包含 ⌘ / ⌃ / ⌥",
+  "提示词": "提示詞",
+  "纯文本": "純文字",
+  "编辑": "編輯",
+  "插入": "插入",
+  "返回": "返回",
+  "新建": "新增",
+  "新建提示词（⌘N）": "新增提示詞 (⌘N)",
+  "编辑提示词（⌘E）": "編輯提示詞 (⌘E)",
+  "设置（⌘,）": "設定 (⌘,)",
+  "⌘S 保存": "⌘S 儲存",
+  "⌃B 返回": "⌃B 返回",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 新增 · ⌘E 編輯 · ↵ 插入"
+ },
+ "ja": {
+  "搜索短语": "フレーズを検索",
+  "搜索提示词": "プロンプトを検索",
+  "新建提示词": "新規プロンプト",
+  "编辑提示词": "プロンプトを編集",
+  "设置": "設定",
+  "返回提示词": "一覧に戻る",
+  "提示词正文": "プロンプト本文",
+  "输入提示词正文…": "本文を入力…",
+  "置顶": "固定",
+  "删除提示词": "プロンプトを削除",
+  "取消": "キャンセル",
+  "保存": "保存",
+  "完成": "完了",
+  "更改后自动保存": "変更は自動保存されます",
+  "呼出快捷键": "ショートカット",
+  "浮窗大小": "ウィンドウサイズ",
+  "小": "小",
+  "中": "中",
+  "大": "大",
+  "外观": "外観",
+  "语言": "言語",
+  "跟随系统": "システムに従う",
+  "浅色": "ライト",
+  "深色": "ダーク",
+  "登录时启动": "ログイン時に起動",
+  "辅助功能权限": "アクセシビリティ",
+  "配置文件": "設定ファイル",
+  "打开": "開く",
+  "已授权 ›": "許可済み ›",
+  "去授权 ›": "許可する ›",
+  "请在系统设置中批准登录项": "システム設定でログイン項目を許可してください",
+  "没有匹配的提示词": "一致するプロンプトがありません",
+  "还没有提示词": "プロンプトはまだありません",
+  " 条": " 件",
+  " 字符": " 文字",
+  "已保存": "保存済み",
+  "未保存": "未保存",
+  "已删除": "削除済み",
+  "请输入提示词正文": "本文を入力してください",
+  "放弃未保存的修改？": "未保存の変更を破棄しますか？",
+  "当前修改尚未保存。": "変更は保存されていません。",
+  "放弃修改": "破棄",
+  "继续编辑": "編集を続ける",
+  "删除这条提示词？": "このプロンプトを削除しますか？",
+  "删除后无法恢复。": "この操作は取り消せません。",
+  "删除": "削除",
+  "按下组合键…": "キーを押してください…",
+  "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥ を含めてください",
+  "提示词": "プロンプト",
+  "纯文本": "プレーンテキスト",
+  "编辑": "編集",
+  "插入": "挿入",
+  "返回": "戻る",
+  "新建": "新規",
+  "新建提示词（⌘N）": "新規プロンプト (⌘N)",
+  "编辑提示词（⌘E）": "プロンプトを編集 (⌘E)",
+  "设置（⌘,）": "設定 (⌘,)",
+  "⌘S 保存": "⌘S 保存",
+  "⌃B 返回": "⌃B 戻る",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 新規 · ⌘E 編集 · ↵ 挿入"
+ },
+ "ko": {
+  "搜索短语": "문구 검색",
+  "搜索提示词": "프롬프트 검색",
+  "新建提示词": "새 프롬프트",
+  "编辑提示词": "프롬프트 편집",
+  "设置": "설정",
+  "返回提示词": "목록으로 돌아가기",
+  "提示词正文": "프롬프트 내용",
+  "输入提示词正文…": "내용 입력…",
+  "置顶": "고정",
+  "删除提示词": "프롬프트 삭제",
+  "取消": "취소",
+  "保存": "저장",
+  "完成": "완료",
+  "更改后自动保存": "변경 사항이 자동 저장됩니다",
+  "呼出快捷键": "단축키",
+  "浮窗大小": "창 크기",
+  "小": "작게",
+  "中": "보통",
+  "大": "크게",
+  "外观": "화면 모드",
+  "语言": "언어",
+  "跟随系统": "시스템 설정",
+  "浅色": "라이트",
+  "深色": "다크",
+  "登录时启动": "로그인 시 실행",
+  "辅助功能权限": "손쉬운 사용 권한",
+  "配置文件": "설정 파일",
+  "打开": "열기",
+  "已授权 ›": "허용됨 ›",
+  "去授权 ›": "권한 허용 ›",
+  "请在系统设置中批准登录项": "시스템 설정에서 로그인 항목을 허용하세요",
+  "没有匹配的提示词": "일치하는 프롬프트가 없습니다",
+  "还没有提示词": "아직 프롬프트가 없습니다",
+  " 条": "개",
+  " 字符": "자",
+  "已保存": "저장됨",
+  "未保存": "저장 안 됨",
+  "已删除": "삭제됨",
+  "请输入提示词正文": "내용을 입력하세요",
+  "放弃未保存的修改？": "저장하지 않은 변경 사항을 버릴까요?",
+  "当前修改尚未保存。": "변경 사항이 저장되지 않았습니다.",
+  "放弃修改": "버리기",
+  "继续编辑": "계속 편집",
+  "删除这条提示词？": "이 프롬프트를 삭제할까요?",
+  "删除后无法恢复。": "이 작업은 되돌릴 수 없습니다.",
+  "删除": "삭제",
+  "按下组合键…": "단축키를 누르세요…",
+  "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥를 포함하세요",
+  "提示词": "프롬프트",
+  "纯文本": "일반 텍스트",
+  "编辑": "편집",
+  "插入": "삽입",
+  "返回": "뒤로",
+  "新建": "새로 만들기",
+  "新建提示词（⌘N）": "새 프롬프트 (⌘N)",
+  "编辑提示词（⌘E）": "프롬프트 편집 (⌘E)",
+  "设置（⌘,）": "설정 (⌘,)",
+  "⌘S 保存": "⌘S 저장",
+  "⌃B 返回": "⌃B 뒤로",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 새로 만들기 · ⌘E 편집 · ↵ 삽입"
+ },
+ "fr": {
+  "搜索短语": "Rechercher des expressions",
+  "搜索提示词": "Rechercher des prompts",
+  "新建提示词": "Nouveau prompt",
+  "编辑提示词": "Modifier le prompt",
+  "设置": "Réglages",
+  "返回提示词": "Retour aux prompts",
+  "提示词正文": "Texte du prompt",
+  "输入提示词正文…": "Saisir le texte…",
+  "置顶": "Épingler",
+  "删除提示词": "Supprimer le prompt",
+  "取消": "Annuler",
+  "保存": "Enregistrer",
+  "完成": "Terminé",
+  "更改后自动保存": "Enregistrement automatique",
+  "呼出快捷键": "Raccourci",
+  "浮窗大小": "Taille de fenêtre",
+  "小": "P",
+  "中": "M",
+  "大": "G",
+  "外观": "Apparence",
+  "语言": "Langue",
+  "跟随系统": "Système",
+  "浅色": "Clair",
+  "深色": "Sombre",
+  "登录时启动": "Ouvrir à la connexion",
+  "辅助功能权限": "Accessibilité",
+  "配置文件": "Configuration",
+  "打开": "Ouvrir",
+  "已授权 ›": "Autorisé ›",
+  "去授权 ›": "Autoriser ›",
+  "请在系统设置中批准登录项": "Autorisez l’ouverture à la connexion dans les Réglages Système",
+  "没有匹配的提示词": "Aucun résultat",
+  "还没有提示词": "Aucun prompt",
+  " 条": " prompts",
+  " 字符": " caractères",
+  "已保存": "Enregistré",
+  "未保存": "Non enregistré",
+  "已删除": "Supprimé",
+  "请输入提示词正文": "Saisissez le texte du prompt",
+  "放弃未保存的修改？": "Abandonner les modifications ?",
+  "当前修改尚未保存。": "Les modifications ne sont pas enregistrées.",
+  "放弃修改": "Abandonner",
+  "继续编辑": "Continuer à modifier",
+  "删除这条提示词？": "Supprimer ce prompt ?",
+  "删除后无法恢复。": "Cette action est irréversible.",
+  "删除": "Supprimer",
+  "按下组合键…": "Appuyez sur les touches…",
+  "请包含 ⌘ / ⌃ / ⌥": "Inclure ⌘ / ⌃ / ⌥",
+  "提示词": "Prompt",
+  "纯文本": "Texte brut",
+  "编辑": "Modifier",
+  "插入": "Insérer",
+  "返回": "Retour",
+  "新建": "Nouveau",
+  "新建提示词（⌘N）": "Nouveau prompt (⌘N)",
+  "编辑提示词（⌘E）": "Modifier le prompt (⌘E)",
+  "设置（⌘,）": "Réglages (⌘,)",
+  "⌘S 保存": "⌘S Enregistrer",
+  "⌃B 返回": "⌃B Retour",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Nouveau · ⌘E Modifier · ↵ Insérer"
+ },
+ "de": {
+  "搜索短语": "Phrasen suchen",
+  "搜索提示词": "Prompts suchen",
+  "新建提示词": "Neuer Prompt",
+  "编辑提示词": "Prompt bearbeiten",
+  "设置": "Einstellungen",
+  "返回提示词": "Zurück zur Liste",
+  "提示词正文": "Prompt-Text",
+  "输入提示词正文…": "Text eingeben…",
+  "置顶": "Anheften",
+  "删除提示词": "Prompt löschen",
+  "取消": "Abbrechen",
+  "保存": "Speichern",
+  "完成": "Fertig",
+  "更改后自动保存": "Änderungen automatisch gespeichert",
+  "呼出快捷键": "Kurzbefehl",
+  "浮窗大小": "Fenstergröße",
+  "小": "K",
+  "中": "M",
+  "大": "G",
+  "外观": "Darstellung",
+  "语言": "Sprache",
+  "跟随系统": "System",
+  "浅色": "Hell",
+  "深色": "Dunkel",
+  "登录时启动": "Beim Anmelden starten",
+  "辅助功能权限": "Bedienungshilfen",
+  "配置文件": "Konfiguration",
+  "打开": "Öffnen",
+  "已授权 ›": "Erlaubt ›",
+  "去授权 ›": "Erlauben ›",
+  "请在系统设置中批准登录项": "Anmeldeobjekt in den Systemeinstellungen erlauben",
+  "没有匹配的提示词": "Keine passenden Prompts",
+  "还没有提示词": "Noch keine Prompts",
+  " 条": " Prompts",
+  " 字符": " Zeichen",
+  "已保存": "Gespeichert",
+  "未保存": "Nicht gespeichert",
+  "已删除": "Gelöscht",
+  "请输入提示词正文": "Bitte Prompt-Text eingeben",
+  "放弃未保存的修改？": "Änderungen verwerfen?",
+  "当前修改尚未保存。": "Änderungen wurden nicht gespeichert.",
+  "放弃修改": "Verwerfen",
+  "继续编辑": "Weiter bearbeiten",
+  "删除这条提示词？": "Diesen Prompt löschen?",
+  "删除后无法恢复。": "Dies kann nicht rückgängig gemacht werden.",
+  "删除": "Löschen",
+  "按下组合键…": "Tastenkombination drücken…",
+  "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥ verwenden",
+  "提示词": "Prompt",
+  "纯文本": "Nur Text",
+  "编辑": "Bearbeiten",
+  "插入": "Einfügen",
+  "返回": "Zurück",
+  "新建": "Neu",
+  "新建提示词（⌘N）": "Neuer Prompt (⌘N)",
+  "编辑提示词（⌘E）": "Prompt bearbeiten (⌘E)",
+  "设置（⌘,）": "Einstellungen (⌘,)",
+  "⌘S 保存": "⌘S Speichern",
+  "⌃B 返回": "⌃B Zurück",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Neu · ⌘E Bearbeiten · ↵ Einfügen"
+ },
+ "es": {
+  "搜索短语": "Buscar frases",
+  "搜索提示词": "Buscar prompts",
+  "新建提示词": "Nuevo prompt",
+  "编辑提示词": "Editar prompt",
+  "设置": "Ajustes",
+  "返回提示词": "Volver a los prompts",
+  "提示词正文": "Texto del prompt",
+  "输入提示词正文…": "Escribe el texto…",
+  "置顶": "Fijar",
+  "删除提示词": "Eliminar prompt",
+  "取消": "Cancelar",
+  "保存": "Guardar",
+  "完成": "Listo",
+  "更改后自动保存": "Los cambios se guardan automáticamente",
+  "呼出快捷键": "Atajo",
+  "浮窗大小": "Tamaño de ventana",
+  "小": "P",
+  "中": "M",
+  "大": "G",
+  "外观": "Apariencia",
+  "语言": "Idioma",
+  "跟随系统": "Sistema",
+  "浅色": "Claro",
+  "深色": "Oscuro",
+  "登录时启动": "Abrir al iniciar sesión",
+  "辅助功能权限": "Accesibilidad",
+  "配置文件": "Configuración",
+  "打开": "Abrir",
+  "已授权 ›": "Permitido ›",
+  "去授权 ›": "Permitir ›",
+  "请在系统设置中批准登录项": "Autoriza el inicio de sesión en Ajustes del Sistema",
+  "没有匹配的提示词": "No hay coincidencias",
+  "还没有提示词": "Aún no hay prompts",
+  " 条": " prompts",
+  " 字符": " caracteres",
+  "已保存": "Guardado",
+  "未保存": "Sin guardar",
+  "已删除": "Eliminado",
+  "请输入提示词正文": "Escribe el texto del prompt",
+  "放弃未保存的修改？": "¿Descartar los cambios?",
+  "当前修改尚未保存。": "Los cambios no se han guardado.",
+  "放弃修改": "Descartar",
+  "继续编辑": "Seguir editando",
+  "删除这条提示词？": "¿Eliminar este prompt?",
+  "删除后无法恢复。": "Esta acción no se puede deshacer.",
+  "删除": "Eliminar",
+  "按下组合键…": "Pulsa las teclas…",
+  "请包含 ⌘ / ⌃ / ⌥": "Incluye ⌘ / ⌃ / ⌥",
+  "提示词": "Prompt",
+  "纯文本": "Texto sin formato",
+  "编辑": "Editar",
+  "插入": "Insertar",
+  "返回": "Volver",
+  "新建": "Nuevo",
+  "新建提示词（⌘N）": "Nuevo prompt (⌘N)",
+  "编辑提示词（⌘E）": "Editar prompt (⌘E)",
+  "设置（⌘,）": "Ajustes (⌘,)",
+  "⌘S 保存": "⌘S Guardar",
+  "⌃B 返回": "⌃B Volver",
+  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Nuevo · ⌘E Editar · ↵ Insertar"
+ }
+};
+function t(text){return interfaceLanguage==='zh-Hans' ? text : (translatedText[interfaceLanguage]?.[text] || englishText[text] || text)}
+let staticLabels=[];
+function captureStaticLabels(){
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+ while(walker.nextNode()){
+  const node=walker.currentNode;
+  if(node.parentElement.closest('script,style'))continue;
+  const key=node.nodeValue.trim();
+  if(englishText[key])staticLabels.push(()=>{node.nodeValue=t(key)});
+ }
+ document.querySelectorAll('[aria-label],[placeholder],[title]').forEach(el=>{
+  for(const attr of ['aria-label','placeholder','title']){
+   const key=el.getAttribute(attr);
+   if(englishText[key])staticLabels.push(()=>el.setAttribute(attr,t(key)));
+  }
+ });
+}
+function localizeStatic(){document.documentElement.lang=interfaceLanguage;staticLabels.forEach(apply=>apply())}
+
+// Keep marked IME text out of every filtering path, including background refreshes.
 function createCommittedSearch(input, onCommit) {
     let value = input.value;
     let composing = false;
@@ -61,33 +488,76 @@ const $=id=>document.getElementById(id), all=s=>[...document.querySelectorAll(s)
 let prompts=[];
 const send=(action,payload={})=>window.webkit.messageHandlers.native.postMessage({action,...payload});
 let selected=0, editing=null, pinned=false, view='list', timer, accept=null, recording=false, shortcut='⌥ A', saving=false;
+let composing=false;
+document.addEventListener('compositionstart',()=>composing=true);
+document.addEventListener('compositionend',()=>composing=false);
 const searchInput=createCommittedSearch($('query'),()=>{selected=0;render()});
 function matches(){const q=searchInput.value.toLowerCase().trim();return prompts.filter(p=>q.split(/\s+/).every(w=>p.body.toLowerCase().includes(w)))}
-function render(){let rows=matches();selected=Math.max(0,Math.min(selected,rows.length-1));$('rows').replaceChildren();rows.forEach((p,i)=>{const b=document.createElement('button');b.className='row'+(i===selected?' selected':'');b.textContent=p.body.replace(/\s+/g,' ');b.title=p.body;b.setAttribute('aria-pressed',String(i===selected));b.onmousedown=e=>e.preventDefault();b.onclick=()=>{selected=i;render();$('query').focus()};b.ondblclick=()=>send('insert',{id:p.id});$('rows').append(b)});if(!rows.length){const e=document.createElement('div');e.className='empty';e.textContent=prompts.length?'没有匹配的提示词':'点击左下角 ＋ 添加提示词';$('rows').append(e)}$('count').textContent=rows.length+' 条';$('edit').disabled=!rows.length;$('rows').children[selected]?.scrollIntoView({block:'nearest'})}
+function selectRow(index){
+ selected=index;
+ all('#rows .prompt-row').forEach((row,i)=>{row.classList.toggle('selected',i===selected);row.querySelector('.row').setAttribute('aria-pressed',String(i===selected))});
+ $('query').focus();
+}
+function updateRowFades(){
+ all('#rows .row').forEach(row=>row.classList.toggle('overflowing',row.clientWidth>0&&row.scrollWidth>row.clientWidth));
+}
+new ResizeObserver(updateRowFades).observe($('rows'));
+function render(){
+ const rows=matches();selected=Math.max(0,Math.min(selected,rows.length-1));$('rows').replaceChildren();
+ rows.forEach((p,i)=>{
+  const row=document.createElement('div');row.className='prompt-row'+(i===selected?' selected':'');
+  const body=document.createElement('button');body.className='row';body.textContent=p.body.replace(/\s+/g,' ');body.title=p.body;
+  body.setAttribute('aria-pressed',String(i===selected));body.onmousedown=e=>e.preventDefault();body.onclick=()=>selectRow(i);
+  body.ondblclick=()=>send('insert',{id:p.id});
+  const editButton=document.createElement('button');editButton.className='iconbutton row-edit';editButton.title=t('编辑提示词（⌘E）');editButton.setAttribute('aria-label',t('编辑提示词'));
+  editButton.innerHTML='<svg class="icon"><use href="#icon-edit"/></svg>';
+  editButton.onclick=e=>{e.stopPropagation();selected=i;edit(p)};
+  row.append(body,editButton);$('rows').append(row);
+ });
+ if(!rows.length){
+  const empty=document.createElement('div');empty.className='empty';empty.textContent=prompts.length?t('没有匹配的提示词'):t('还没有提示词');
+  if(!prompts.length){const add=document.createElement('button');add.className='primary';add.textContent=t('新建提示词');add.onclick=()=>edit(null);empty.append(add)}
+  $('rows').append(empty);
+ }
+ $('count').textContent=rows.length+t(' 条');
+ $('rows').children[selected]?.scrollIntoView({block:'nearest'});
+ requestAnimationFrame(updateRowFades);
+}
 function dirty(){return view==='editor'&&($('body').value!==(editing?.body||'')||pinned!==!!editing?.pinned)}
-function dialog(title,description,label,fn){$('dialogTitle').textContent=title;$('dialogText').textContent=description;$('accept').textContent=label;$('stay').textContent=label==='删除'?'取消':'继续编辑';accept=fn;$('confirm').hidden=false}
+function dialog(title,description,label,fn){$('dialogTitle').textContent=title;$('dialogText').textContent=description;$('accept').textContent=label;$('stay').textContent=label===t('删除')?t('取消'):t('继续编辑');accept=fn;$('confirm').hidden=false}
 $('stay').onclick=()=>{$('confirm').hidden=true};$('accept').onclick=()=>{$('confirm').hidden=true;accept?.()};
-function navigate(next,fn){if(dirty()){dialog('放弃未保存的修改？','当前修改尚未保存。','放弃修改',()=>{show(next);fn?.()})}else{show(next);fn?.()}}
-function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'提示词全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'点底部 ＋ 新建，铅笔编辑，齿轮进入设置。',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、三档大小、外观和备份都在这里。',preview:'Ctrl+B 返回列表'}[next])}
-function edit(p){navigate('editor',()=>{editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';$('editorHeading').textContent=p?'编辑提示词':'新建提示词';$('delete').disabled=!p;editorState();$('body').focus()})}
-function editorState(){$('characters').textContent=Array.from($('body').value).length+' 字符';$('pin').setAttribute('aria-pressed',String(pinned));$('saveState').textContent=dirty()?'未保存':'已保存';send('draft',{id:editing?.id||'',body:$('body').value,pinned})}
+function navigate(next,fn){if(dirty()){dialog(t('放弃未保存的修改？'),t('当前修改尚未保存。'),t('放弃修改'),()=>{show(next);fn?.()})}else{show(next);fn?.()}}
+function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'提示词全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
+function edit(p){navigate('editor',()=>{editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';$('editorHeading').textContent=p?t('编辑提示词'):t('新建提示词');$('delete').disabled=!p;editorState();$('body').focus()})}
+function editorState(){$('characters').textContent=Array.from($('body').value).length+t(' 字符');$('pin').setAttribute('aria-pressed',String(pinned));$('saveState').textContent=dirty()?t('未保存'):t('已保存');send('draft',{id:editing?.id||'',body:$('body').value,pinned})}
 function save(){if(saving)return;if(!$('body').value.trim()){toast('请输入提示词正文');return}saving=true;$('save').disabled=true;send('save',{id:editing?.id||'',body:$('body').value,pinned})}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1800)}
-$('new').onclick=()=>edit(null);$('edit').onclick=()=>edit(matches()[selected]);$('settingsButton').onclick=()=>navigate('settings');all('[data-back]').forEach(b=>b.onclick=()=>navigate('list'));all('[data-mode]').forEach(b=>b.onclick=()=>b.dataset.mode==='editor'?edit(matches()[selected]):navigate(b.dataset.mode));$('body').oninput=editorState;$('pin').onclick=()=>{pinned=!pinned;editorState()};$('save').onclick=save;
-$('delete').onclick=()=>dialog('删除这条提示词？','删除后无法恢复。','删除',()=>{send('delete',{id:editing.id})});
+$('new').onclick=()=>edit(null);$('settingsButton').onclick=()=>navigate('settings');
+all('[data-back]').forEach(b=>b.onclick=()=>navigate('list'));all('[data-mode]').forEach(b=>b.onclick=()=>b.dataset.mode==='editor'?edit(matches()[selected]):navigate(b.dataset.mode));$('body').oninput=editorState;$('pin').onclick=()=>{pinned=!pinned;editorState()};$('save').onclick=save;
+$('delete').onclick=()=>dialog(t('删除这条提示词？'),t('删除后无法恢复。'),t('删除'),()=>{send('delete',{id:editing.id})});
 all('[data-scale]').forEach(b=>b.onclick=()=>send('size',{value:{'0.8':'small','0.9':'medium','1':'large'}[b.dataset.scale]}));
-const themeButton=document.createElement('button');themeButton.id='appearance';themeButton.className='shortcut';themeButton.setAttribute('aria-label','外观');themeButton.setAttribute('aria-expanded','false');
-$('appearance').replaceWith(themeButton);
-const themeMenu=document.createElement('div');themeMenu.className='theme-menu';themeMenu.hidden=true;
-for(const [value,label] of [['system','跟随系统'],['light','浅色'],['dark','深色']]){const b=document.createElement('button');b.textContent=label;b.onclick=()=>{themeMenu.hidden=true;themeButton.setAttribute('aria-expanded','false');send('appearance',{value})};themeMenu.append(b)}
-document.querySelector('.window').append(themeMenu);
-themeButton.onclick=()=>{themeMenu.hidden=!themeMenu.hidden;themeButton.setAttribute('aria-expanded',String(!themeMenu.hidden))};
-document.addEventListener('click',event=>{if(!themeMenu.contains(event.target)&&!themeButton.contains(event.target)){themeMenu.hidden=true;themeButton.setAttribute('aria-expanded','false')}});
+const settingMenus=[];
+function makeSelect(id,action,options){
+ const button=document.createElement('button');button.id=id;button.className='select-control';button.setAttribute('aria-expanded','false');
+ $(id).replaceWith(button);
+ const label=document.createElement('span');button.append(label);
+ const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.setAttribute('viewBox','0 0 16 16');arrow.setAttribute('class','icon chevron');arrow.innerHTML='<path d="m4.5 6 3.5 3.5L11.5 6"/>';button.append(arrow);
+ const menu=document.createElement('div');menu.className='setting-menu';menu.hidden=true;button.parentElement.append(menu);
+ const control={button,menu,label,options,update(value){
+  label.textContent=t(options.find(option=>option[0]===value)?.[1]||options[0][1]);menu.replaceChildren();
+  for(const [value,title] of options){const item=document.createElement('button');item.textContent=t(title);item.onclick=()=>{control.close();send(action,{value})};menu.append(item)}
+ },close(){menu.hidden=true;button.setAttribute('aria-expanded','false')}};
+ settingMenus.push(control);button.onclick=()=>{const opening=menu.hidden;settingMenus.forEach(m=>m.close());menu.hidden=!opening;button.setAttribute('aria-expanded',String(opening))};
+ return control;
+}
+const appearanceControl=makeSelect('appearance','appearance',[['system','跟随系统'],['light','浅色'],['dark','深色']]);
+const languageControl=makeSelect('language','language',[['system','跟随系统'],['zh-Hans','简体中文'],['zh-Hant','繁體中文'],['en','English'],['ja','日本語'],['ko','한국어'],['fr','Français'],['de','Deutsch'],['es','Español']]);
+document.addEventListener('click',event=>{settingMenus.forEach(m=>{if(!m.menu.contains(event.target)&&!m.button.contains(event.target))m.close()})});
 
 $('login').onclick=()=>send('login',{enabled:$('login').getAttribute('aria-checked')!=='true'});
-$('permission').onclick=()=>send('permission');$('import').onclick=()=>send('import');$('export').onclick=()=>send('export');
-$('shortcut').onclick=()=>{recording=true;send('recording',{enabled:true});$('shortcut').textContent='按下组合键…'};
-document.addEventListener('keydown',e=>{if(searchInput.isComposing||e.isComposing||e.keyCode===229)return;if(e.key==='Escape'&&!themeMenu.hidden){e.preventDefault();themeMenu.hidden=true;themeButton.setAttribute('aria-expanded','false');return;}if(!$('confirm').hidden){if(e.key==='Escape')$('confirm').hidden=true;return}if(recording){e.preventDefault();if(e.key==='Escape'){recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;return}if(['Meta','Control','Shift','Alt'].includes(e.key))return;if(!(e.metaKey||e.ctrlKey||e.altKey)){toast('请包含 ⌘ / ⌃ / ⌥');return}send('shortcut',{code:e.code,key:e.key,control:e.ctrlKey,option:e.altKey,command:e.metaKey,shift:e.shiftKey});recording=false;send('recording',{enabled:false});return}if(view==='editor'&&(e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();save()}if(e.key==='Escape'){if(view!=='list')navigate('list');else send('dismiss')}if(view==='preview'&&e.ctrlKey&&e.key==='b'){e.preventDefault();show('list')}if(view==='preview'&&e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(view==='list'){if(e.key==='ArrowDown'||e.ctrlKey&&e.key==='n'){e.preventDefault();selected++;render()}if(e.key==='ArrowUp'||e.ctrlKey&&e.key==='p'){e.preventDefault();selected--;render()}if(e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(e.ctrlKey&&e.key==='f'&&matches().length){e.preventDefault();preview()}if(e.metaKey&&e.shiftKey&&e.key.toLowerCase()==='c'&&matches().length){e.preventDefault();send('copy',{body:matches()[selected].body})}}});render();
+$('permission').onclick=()=>send('permission');$('openDirectory').onclick=()=>send('openDirectory');
+$('shortcut').onclick=()=>{recording=true;send('recording',{enabled:true});$('shortcut').textContent=t('按下组合键…')};
+document.addEventListener('keydown',e=>{if(composing||searchInput.isComposing||e.isComposing||e.keyCode===229)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}if(e.key==='Escape'&&settingMenus.some(m=>!m.menu.hidden)){settingMenus.forEach(m=>m.close());return;}if(!$('confirm').hidden){if(e.key==='Escape')$('confirm').hidden=true;return}if(recording){e.preventDefault();if(e.key==='Escape'){recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;return}if(['Meta','Control','Shift','Alt'].includes(e.key))return;if(!(e.metaKey||e.ctrlKey||e.altKey)){toast('请包含 ⌘ / ⌃ / ⌥');return}send('shortcut',{code:e.code,key:e.key,control:e.ctrlKey,option:e.altKey,command:e.metaKey,shift:e.shiftKey});recording=false;send('recording',{enabled:false});return}if(e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){const key=e.key.toLowerCase();if(key==='n'){e.preventDefault();edit(null);return}if(key===','){e.preventDefault();navigate('settings');return}if(key==='e'&&(view==='list'||view==='preview')){e.preventDefault();if(matches()[selected])edit(matches()[selected]);return}}if(view==='editor'&&(e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();save()}if(e.key==='Escape'){if(view!=='list')navigate('list');else send('dismiss')}if(view==='preview'&&((e.ctrlKey&&e.key==='b')||(e.key==='ArrowLeft'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey))){e.preventDefault();show('list')}if(view==='preview'&&e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(view==='list'){if(e.key==='ArrowDown'||e.ctrlKey&&e.key==='n'){e.preventDefault();selected++;render()}if(e.key==='ArrowUp'||e.ctrlKey&&e.key==='p'){e.preventDefault();selected--;render()}if(e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(((e.ctrlKey&&e.key==='f')||(e.key==='ArrowRight'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey))&&matches().length){e.preventDefault();preview()}if(e.metaKey&&e.shiftKey&&e.key.toLowerCase()==='c'&&matches().length){e.preventDefault();send('copy',{body:matches()[selected].body})}}});render();
 
 for(const el of [$('body'),$('query')]){el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off')}
 const previewPage=document.createElement('div');previewPage.id='preview';previewPage.className='page';
@@ -96,19 +566,25 @@ document.querySelector('.window').prepend(previewPage);
 previewPage.querySelector('.head button').onclick=()=>show('list');previewPage.querySelector('.textbutton').onclick=()=>edit(matches()[selected]);previewPage.querySelector('.primary').onclick=()=>{if(matches()[selected])send('insert',{id:matches()[selected].id})};
 function preview(){$('previewBody').textContent=matches()[selected].body;show('preview')}
 window.nativeState=next=>{
+ interfaceLanguage=next.resolvedLanguage||'zh-Hans';localizeStatic();
  const selectedID=matches()[selected]?.id;prompts=next.prompts||[];
  const newIndex=matches().findIndex(p=>p.id===selectedID);if(newIndex>=0)selected=newIndex;
  document.documentElement.style.setProperty('--scale',String(next.scale||1));
  document.body.classList.toggle('dark',!!next.dark);
  all('[data-scale]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.scale)===(next.scale||1))));
- $('appearance').textContent=({system:'跟随系统',light:'浅色',dark:'深色'}[next.appearance||'system'])+' ⌄';$('login').setAttribute('aria-checked',String(!!next.login));
- $('login').title=next.loginPending?'请在系统设置中批准登录项':'';
- $('permission').textContent=next.trusted?'已授权 ›':'去授权 ›';
+ appearanceControl.update(next.appearance||'system');languageControl.update(next.language||'system');$('login').setAttribute('aria-checked',String(!!next.login));
+ $('login').title=next.loginPending?t('请在系统设置中批准登录项'):'';
+ $('permission').textContent=next.trusted?t('已授权 ›'):t('去授权 ›');
  $('permission').style.color=next.trusted?'':'var(--muted)';
  shortcut=next.shortcut||'⌃⌥Space';if(!recording)$('shortcut').textContent=shortcut;
+ if(view==='editor'){$('editorHeading').textContent=editing?t('编辑提示词'):t('新建提示词');editorState()}
  render();
 };
 window.nativeOpen=destination=>{
+ if(['new','edit','settings'].includes(destination)&&(composing||searchInput.isComposing||recording))return;
+ if(!$('confirm').hidden&&destination!=='resume')return;
+ if(destination==='new'){edit(null);return}
+ if(destination==='edit'){if((view==='list'||view==='preview')&&matches()[selected])edit(matches()[selected]);return}
  recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;
  if(destination==='resume'){
   if(view==='list'){searchInput.reset();selected=0;render();$('query').focus()}
@@ -117,9 +593,10 @@ window.nativeOpen=destination=>{
  send('refresh');
 };
 window.nativeSaveFailed=()=>{saving=false;$('save').disabled=false};
-window.nativeSaved=id=>{window.nativeSaveFailed();editing=null;searchInput.reset();selected=Math.max(0,prompts.findIndex(p=>p.id===id));show('list');toast(id?'已保存':'已删除')};
+window.nativeSaved=id=>{window.nativeSaveFailed();editing=null;searchInput.reset();selected=Math.max(0,prompts.findIndex(p=>p.id===id));show('list');toast(id?t('已保存'):t('已删除'))};
 window.nativeToast=toast;
 
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>send('refresh'));
+captureStaticLabels();
 send('ready');
 </script></html>

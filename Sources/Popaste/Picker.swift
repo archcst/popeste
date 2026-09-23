@@ -1,8 +1,14 @@
 import AppKit
 
-final class PickerPanel: NSPanel { override var canBecomeKey: Bool { true }; override var canBecomeMain: Bool { false } }
-final class Picker: NSObject {
+final class PickerPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+    // Web content owns cancellation and draft confirmation; silence the AppKit fallback.
+    override func cancelOperation(_ sender: Any?) {}
+}
+final class Picker: NSObject, NSWindowDelegate {
     let panel = PickerPanel(contentRect: NSRect(x: 0, y: 0, width: 480, height: 424), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+    private let surface = NSView()
     let store: Store
     let configuration: Configuration
     let settings: Settings
@@ -10,6 +16,8 @@ final class Picker: NSObject {
     let interface = WebInterface(mode: "list")
     let insertion = Insertion()
     private var monitors: [Any] = []
+    var preferencesChanged: (() -> Void)?
+    private var activationObserver: NSObjectProtocol?
     private var busy = false
     private var modal = false
     private var recording = false
@@ -17,12 +25,42 @@ final class Picker: NSObject {
         self.store = store; self.configuration = configuration; self.settings = settings
         manager = Manager(store: store)
         super.init()
+        panel.delegate = self
         panel.title = "Popaste"; panel.level = .popUpMenu; panel.hasShadow = true; panel.isOpaque = false; panel.backgroundColor = .clear
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]; panel.isReleasedWhenClosed = false
-        interface.view.frame = panel.contentView!.bounds; panel.contentView = interface.view
+        surface.frame = panel.contentView!.bounds
+        surface.wantsLayer = true
+        surface.layer?.cornerCurve = .continuous
+        surface.layer?.masksToBounds = true
+        surface.layer?.borderWidth = 0
+        interface.view.frame = surface.bounds
+        surface.addSubview(interface.view)
+        panel.contentView = surface
         interface.action = { [weak self] name, payload in self?.handle(name, payload) }
         store.onChange = { [weak self] in self?.reload() }
-        configuration.onChange = { [weak self] in self?.resize(); self?.reload() }
+        configuration.onChange = { [weak self] in self?.resize(); self?.reload(); self?.preferencesChanged?() }
+        // A nonactivating panel can keep the original app active, so Cmd+Tab also
+        // needs a workspace activation observer rather than only app deactivation.
+        activationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] notification in
+            guard let self, !self.modal, self.panel.isVisible,
+                  let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                  app.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+                  NSWorkspace.shared.frontmostApplication?.processIdentifier == app.processIdentifier else { return }
+            self.dismiss(restore: false)
+        }
+    }
+    deinit {
+        if let activationObserver { NSWorkspace.shared.notificationCenter.removeObserver(activationObserver) }
+    }
+    func windowDidResignKey(_ notification: Notification) {
+        guard !modal else { return }
+        // Let temporary responder changes settle before deciding whether focus left.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.modal, self.panel.isVisible, !self.panel.isKeyWindow else { return }
+            self.dismiss(restore: false)
+        }
     }
     private func handle(_ name: String, _ payload: [String: Any]) {
         do {
@@ -38,15 +76,11 @@ final class Picker: NSObject {
                 if let id = (payload["id"] as? String).flatMap(UUID.init(uuidString:)) {
                     try store.delete(id); manager.draft = PromptDraft(); reload(); interface.call("nativeSaved", "")
                 }
-            case "import", "export":
-                modal = true; panel.level = .normal; defer { modal = false; panel.level = .popUpMenu; panel.makeKeyAndOrderFront(nil); panel.makeFirstResponder(interface.view) }
-                NSApp.activate(ignoringOtherApps: true)
-                if let message = try name == "import" ? manager.importFile() : manager.exportFile() { interface.toast(message) }
             case "dismiss": dismiss(restore: true)
             case "insert":
                 if let id = payload["id"] as? String, let prompt = store.prompts.first(where: { $0.id.uuidString == id }) { confirm(prompt) }
             case "copy":
-                if let body = payload["body"] as? String { copyText(body); interface.toast("正文已复制") }
+                if let body = payload["body"] as? String { copyText(body); interface.toast(tr("正文已复制")) }
             default: try settings.handle(name, payload); reload()
             }
         } catch { if name == "save" { interface.call("nativeSaveFailed", "") }; interface.toast(error.localizedDescription); reload() }
@@ -85,6 +119,8 @@ final class Picker: NSObject {
     }
     func canQuit() -> Bool { modal = true; panel.level = .normal; defer { modal = false; panel.level = .popUpMenu }; return manager.canLeave() }
     func reload() {
+        surface.layer?.cornerRadius = 19 * configuration.value.pickerSize.scale
+        panel.invalidateShadow()
         var state = settings.state
         state["prompts"] = interfacePrompts(store.search(""))
         state["scale"] = configuration.value.pickerSize.scale
@@ -97,7 +133,7 @@ final class Picker: NSObject {
             if success { do { try self.store.used(prompt.id) } catch { showError(error) } }
             else {
                 NSApp.activate(ignoringOtherApps: true)
-                let alert = NSAlert(); alert.messageText = "无法自动插入"; alert.informativeText = "请检查辅助功能权限，并保持原输入窗口可用。你可以复制正文后手动粘贴。"; alert.addButton(withTitle: "复制正文"); alert.addButton(withTitle: "取消")
+                let alert = NSAlert(); alert.messageText = tr("无法自动插入"); alert.informativeText = tr("请检查辅助功能权限，并保持原输入窗口可用。你可以复制正文后手动粘贴。"); alert.addButton(withTitle: tr("复制正文")); alert.addButton(withTitle: tr("取消"))
                 if alert.runModal() == .alertFirstButtonReturn { copyText(prompt.body) }
             }
         }

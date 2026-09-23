@@ -17,6 +17,22 @@ struct Preferences: Codable, Equatable {
     var onboarded = false
     var launchAtLogin = false
     var appearance: String?
+    var language: String?
+    static let supportedLanguages = ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "de", "es"]
+    static func resolveLanguage(_ selection: String?, preferred: [String] = Locale.preferredLanguages) -> String {
+        if let selection, supportedLanguages.contains(selection) { return selection }
+        for identifier in preferred {
+            let parts = identifier.replacingOccurrences(of: "_", with: "-").lowercased().split(separator: "-").map(String.init)
+            guard let base = parts.first else { continue }
+            if base == "zh" {
+                return parts.contains("hant") || (!parts.contains("hans") && parts.contains(where: { ["tw", "hk", "mo"].contains($0) })) ? "zh-Hant" : "zh-Hans"
+            }
+            if supportedLanguages.contains(base) { return base }
+        }
+        return "en"
+    }
+    var resolvedLanguage: String { Self.resolveLanguage(language) }
+
 }
 enum LocalFiles {
     static var directory: URL { FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/popeste", isDirectory: true) }

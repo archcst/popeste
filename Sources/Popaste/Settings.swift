@@ -10,6 +10,11 @@ final class Settings {
         switch name {
         case "size": if let value = payload["value"] as? String, let size = PickerSize(rawValue: value) { try configuration.update { $0.pickerSize = size } }
         case "appearance": if let value = payload["value"] as? String, ["system", "light", "dark"].contains(value) { try configuration.update { $0.appearance = value } }
+        case "language": if let value = payload["value"] as? String, (["system"] + Preferences.supportedLanguages).contains(value) { try configuration.update { $0.language = value } }
+        case "openDirectory":
+            let directory = configuration.url.deletingLastPathComponent()
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            if !NSWorkspace.shared.open(directory) { throw NSError(domain: "Popaste", code: 2, userInfo: [NSLocalizedDescriptionKey: tr("无法打开配置目录。")]) }
         case "shortcut": try record(payload)
         case "login":
             if payload["enabled"] as? Bool == true { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -31,8 +36,8 @@ final class Settings {
         label += key.hasPrefix("Key") ? String(key.dropFirst(3)) : key.hasPrefix("Digit") ? String(key.dropFirst(5)) : key
         try hotKey.register(Shortcut(code: code, modifiers: modifiers, label: label))
     }
-    private func invalidShortcut() -> Error { NSError(domain: "Popaste", code: 1, userInfo: [NSLocalizedDescriptionKey: "请使用 ⌃ / ⌥ / ⌘ 加字符键或空格。原快捷键保持有效。"]) }
+    private func invalidShortcut() -> Error { NSError(domain: "Popaste", code: 1, userInfo: [NSLocalizedDescriptionKey: tr("请使用 ⌃ / ⌥ / ⌘ 加字符键或空格。原快捷键保持有效。")]) }
     var state: [String: Any] {
-        ["prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
+        ["language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
     }
 }
