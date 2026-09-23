@@ -10,6 +10,7 @@ final class Settings {
         switch name {
         case "size": if let value = payload["value"] as? String, let size = PickerSize(rawValue: value) { try configuration.update { $0.pickerSize = size } }
         case "appearance": if let value = payload["value"] as? String, ["system", "light", "dark"].contains(value) { try configuration.update { $0.appearance = value } }
+        case "vimEditing": if let enabled = payload["enabled"] as? Bool { try configuration.update { $0.vimEditing = enabled } }
         case "navigationSchemes": if let value = payload["value"] as? [String], value.allSatisfy({ ["arrows", "emacs", "vim"].contains($0) }) { try configuration.update { $0.navigationSchemes = value } }
         case "language": if let value = payload["value"] as? String, (["system"] + Preferences.supportedLanguages).contains(value) { try configuration.update { $0.language = value } }
         case "openDirectory":
@@ -39,6 +40,6 @@ final class Settings {
     }
     private func invalidShortcut() -> Error { NSError(domain: "Popaste", code: 1, userInfo: [NSLocalizedDescriptionKey: tr("请使用 ⌃ / ⌥ / ⌘ 加字符键或空格。原快捷键保持有效。")]) }
     var state: [String: Any] {
-        ["navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
+        ["vimEditing": configuration.value.vimEditing ?? false, "navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
     }
 }

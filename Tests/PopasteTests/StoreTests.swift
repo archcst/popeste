@@ -103,6 +103,9 @@ final class StoreTests {
             try config.update { $0.navigationSchemes = schemes }
             XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.resolvedNavigationSchemes, schemes)
         }
+        XCTAssertEqual(config.value.vimEditing ?? false, false)
+        try config.update { $0.vimEditing = true }
+        XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.vimEditing, true)
         let permission = try FileManager.default.attributesOfItem(atPath: config.url.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(permission?.intValue, 0o600)
         try Data("broken".utf8).write(to: config.url)

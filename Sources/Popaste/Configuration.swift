@@ -18,6 +18,7 @@ struct Preferences: Codable, Equatable {
     var launchAtLogin = false
     var appearance: String?
     var language: String?
+    var vimEditing: Bool?
     var navigationSchemes: [String]?
     var resolvedNavigationSchemes: [String] { (navigationSchemes ?? ["arrows"]).filter { ["arrows", "emacs", "vim"].contains($0) } }
     static let supportedLanguages = ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "de", "es"]

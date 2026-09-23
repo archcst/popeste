@@ -1,5 +1,6 @@
 let interfaceLanguage = 'zh-Hans';
 const englishText = {
+ "Vim 编辑模式":"Vim editing","普通模式":"Normal","插入模式":"Insert","保存未完成的修改？":"Save your changes?",
  '快捷键方案':'Key bindings','返回':'Back',
  '展开':'Expand',
  '搜索短语':'Search phrases','新建短语':'New phrase','新建短语（⌘N）':'New phrase (⌘N)',
@@ -18,6 +19,7 @@ const englishText = {
 };
 const translatedText = {
  "zh-Hant": {
+ "Vim 编辑模式":"Vim 編輯模式","普通模式":"普通模式","插入模式":"插入模式","保存未完成的修改？":"儲存尚未完成的變更？",
   "快捷键方案": "快捷鍵方案",
   "展开": "展開",
   "搜索短语": "搜尋短語",
@@ -81,6 +83,7 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
  },
  "ja": {
+ "Vim 编辑模式":"Vim 編集モード","普通模式":"ノーマル","插入模式":"挿入","保存未完成的修改？":"変更を保存しますか？",
   "快捷键方案": "キー設定",
   "展开": "展開",
   "搜索短语": "フレーズを検索",
@@ -144,6 +147,7 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
  },
  "ko": {
+ "Vim 编辑模式":"Vim 편집 모드","普通模式":"일반 모드","插入模式":"입력 모드","保存未完成的修改？":"변경 사항을 저장할까요?",
   "快捷键方案": "키 설정",
   "展开": "펼치기",
   "搜索短语": "문구 검색",
@@ -207,6 +211,7 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
  },
  "fr": {
+ "Vim 编辑模式":"Édition Vim","普通模式":"Normal","插入模式":"Insertion","保存未完成的修改？":"Enregistrer les modifications ?",
   "快捷键方案": "Raccourcis",
   "展开": "Développer",
   "搜索短语": "Rechercher des expressions",
@@ -270,6 +275,7 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
  },
  "de": {
+ "Vim 编辑模式":"Vim-Bearbeitung","普通模式":"Normal","插入模式":"Einfügen","保存未完成的修改？":"Änderungen speichern?",
   "快捷键方案": "Tastenbelegung",
   "展开": "Ausklappen",
   "搜索短语": "Textn suchen",
@@ -333,6 +339,7 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
  },
  "es": {
+ "Vim 编辑模式":"Edición Vim","普通模式":"Normal","插入模式":"Inserción","保存未完成的修改？":"¿Guardar los cambios?",
   "快捷键方案": "Atajos de teclado",
   "展开": "Expandir",
   "搜索短语": "Buscar frases",

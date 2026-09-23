@@ -15,6 +15,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent}
 .window{width:calc(100vw / var(--scale,1));height:calc(100vh / var(--scale,1));max-width:none;box-shadow:none;border-radius:0}
 """
 html = html.replace('</style>', override + '</style>')
-script = (root / 'Sources/Popaste/Resources/localization.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/search-input.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/interface.js').read_text()
+script = (root / 'Sources/Popaste/Resources/localization.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/search-input.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/vim-editor.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/interface.js').read_text()
 html = html.replace('</html>', '<script>' + script + '</script></html>')
 (root / 'Sources/Popaste/Resources/interface.html').write_text(html)

@@ -20,6 +20,7 @@ final class Manager {
         guard draft.dirty else { return true }
         let alert = NSAlert(); alert.messageText = tr("保存未完成的修改？")
         alert.addButton(withTitle: tr("保存")); alert.addButton(withTitle: tr("继续编辑")); alert.addButton(withTitle: tr("放弃修改"))
+        alert.buttons[0].keyEquivalent = "\r"; alert.buttons[1].keyEquivalent = "\u{1b}"; alert.buttons[2].keyEquivalent = "n"
         switch alert.runModal() {
         case .alertFirstButtonReturn:
             do { try save(); return true } catch { showError(error); return false }
