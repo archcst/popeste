@@ -7,5 +7,5 @@ swiftc Sources/Popaste/InterfaceText.swift Sources/Popaste/Localization.swift So
 
 node --test Tests/search-input.test.cjs Tests/vim-editor.test.cjs Tests/editor-exit.test.cjs
 
-swiftc Sources/Popaste/InterfaceText.swift Sources/Popaste/Localization.swift Sources/Popaste/Store.swift Sources/Popaste/Configuration.swift Sources/Popaste/Style.swift Sources/Popaste/Insertion.swift Sources/Popaste/CompactIcon.swift Sources/Popaste/NativeControls.swift Sources/Popaste/NativeEditor.swift Sources/Popaste/NativeInterface.swift Tests/PopasteTests/NativeTests.swift -o .build/tests/native-tests
+swiftc Sources/Popaste/InterfaceText.swift Sources/Popaste/Localization.swift Sources/Popaste/Store.swift Sources/Popaste/Configuration.swift Sources/Popaste/Style.swift Sources/Popaste/Insertion.swift Sources/Popaste/CompactIcon.swift Sources/Popaste/NativeControls.swift Sources/Popaste/NativeEditor.swift Sources/Popaste/NativeInterface.swift Sources/Popaste/GlassSurface.swift Tests/PopasteTests/NativeTests.swift -o .build/tests/native-tests
 .build/tests/native-tests

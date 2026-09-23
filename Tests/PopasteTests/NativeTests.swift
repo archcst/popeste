@@ -74,6 +74,34 @@ import AppKit
         _ = ui.handleKey(key("",code:125)); _ = ui.handleKey(key("",code:125)); _ = ui.handleKey(key("\r",code:36))
         assert(languageSelection == "zh-Hans")
         assert(!ui.view.subviews.contains { $0 is SettingsMenuShield })
+        // The same settings state works with and without the native glass surface.
+        for scale in [0.8, 0.9, 1.0] {
+            ui.state["scale"] = scale
+            ui.state["glassStyle"] = "clear"
+            ui.state["glass"] = true
+            let glassButton = ui.view.subviews.compactMap { $0 as? NativeButton }.first { $0.title == tr("液态玻璃") }
+            assert(glassButton != nil)
+            let glassPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
+            ui.state["glass"] = false
+            assert(!ui.view.subviews.contains { ($0 as? NativeButton)?.title == tr("液态玻璃") })
+            assert(!ui.view.subviews.contains { ($0 as? NSTextField)?.stringValue == tr("玻璃样式") })
+            let solidPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
+            assert(abs(glassPath - solidPath - 35 * scale) < 0.01)
+            assert(ui.view.fill.alphaComponent == 1)
+            assert(ui.state["glassStyle"] as? String == "clear")
+        }
+        // Exercise the real fallback wrapper without changing system preferences.
+        let priorGlassOverride = ProcessInfo.processInfo.environment["POPASTE_GLASS"]
+        setenv("POPASTE_GLASS", "0", 1)
+        let surface = GlassSurface(frame:NSRect(x:0,y:0,width:480,height:424))
+        let content = NSView(frame:surface.bounds)
+        surface.install(content)
+        surface.update(scale:1,dark:false,style:"clear")
+        assert(!surface.glassEnabled && content.superview === surface)
+        assert(surface.layer?.masksToBounds == true)
+        if let priorGlassOverride { setenv("POPASTE_GLASS", priorGlassOverride, 1) }
+        else { unsetenv("POPASTE_GLASS") }
+        print("Glass availability, compact fallback settings, and opaque surface checks passed")
         print("Native editor, TextKit wrapping, search focus / marked text, and save-confirmation checks passed")
     }
 }

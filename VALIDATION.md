@@ -1,3 +1,11 @@
+# macOS 14+ 兼容与玻璃选项回退（2026-09-23）
+
+- Swift Package 部署目标及应用 LSMinimumSystemVersion 统一为 macOS 14.0；Release 产物的 LC_BUILD_VERSION minos 为 14.0。
+- NSGlassEffectView 保留 macOS 26 availability 检查，产物中该类为 weak external 引用，旧系统使用普通实色容器。
+- 根据实际玻璃能力显示设置选项；不可用时隐藏整行并上移后续设置，保持用户已保存的玻璃样式。
+- 原生测试覆盖三档尺寸下的选项显隐、后续行位置、实色背景，以及 POPASTE_GLASS=0 的真实容器回退。现有全部回归测试及 Release 构建通过。
+- 本次验证环境为 macOS 26；macOS 14、15 实机启动与使用仍待验证。
+
 # Liquid Glass 初步试验（2026-09-23）
 
 - 稳定的 Swift 界面版本已标记为 `0.0.2`（b92bbd1）。玻璃效果基于该标签继续开发。

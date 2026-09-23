@@ -328,17 +328,21 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         if expanded { rows.scrollToVisible(CGRect(x:0,y:CGFloat(selected)*46*s,width:1,height:46*s)) }
     }
     private func renderSettings() {
-        // 57-point header, nine 35-point rows, and the original 45-point footer.
+        // Hide unavailable glass controls and keep the remaining settings contiguous.
         for child in view.subviews {
             if let field = child as? NativeLabel { field.font = .systemFont(ofSize:14*s,weight:.medium); field.textColor = InterfacePalette.ink }
             if let back = child as? NativeButton { back.inkColor = InterfacePalette.muted }
         }
-        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","外观","玻璃样式","登录时启动","辅助功能权限","配置文件"]
+        let glassAvailable = state["glass"] as? Bool == true
+        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","外观"]
+            + (glassAvailable ? ["玻璃样式"] : [])
+            + ["登录时启动","辅助功能权限","配置文件"]
+        func rowY(_ title: String) -> CGFloat { CGFloat(57 + (titles.firstIndex(of:title) ?? 0) * 35) }
         label("Popaste",CGRect(x:370,y:14,width:93,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
         for (i,title) in titles.enumerated() {
             let y = CGFloat(57+i*35)
             label(tr(title),CGRect(x:18,y:y+5,width:170,height:28)).textColor = InterfacePalette.ink
-            if i < 8 {
+            if i < titles.count - 1 {
                 let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
                 add(line,CGRect(x:18,y:y+34,width:444,height:1))
             }
@@ -368,18 +372,20 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             x += widths[i]+2
         }
         select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:197)
-        select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:232)
-        toggle("login",y:267,value:state["login"] as? Bool ?? false)
+        if glassAvailable {
+            select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:rowY("玻璃样式"))
+        }
+        toggle("login",y:rowY("登录时启动"),value:state["login"] as? Bool ?? false)
         let permitted = state["trusted"] as? Bool == true
         let permissionTitle = tr(permitted ? "已授权 ›" : "去授权 ›")
         let permissionWidth = textWidth(permissionTitle,size:11)+24
-        let permission = button(permissionTitle,CGRect(x:462-permissionWidth,y:307,width:permissionWidth,height:28)) { [weak self] in self?.emit("permission") }
+        let permission = button(permissionTitle,CGRect(x:462-permissionWidth,y:rowY("辅助功能权限")+5,width:permissionWidth,height:28)) { [weak self] in self?.emit("permission") }
         permission.font = .systemFont(ofSize:11*s); permission.statusDot = true
         permission.inkColor = permitted ? NSColor(srgbRed:112/255,green:149/255,blue:128/255,alpha:1) : InterfacePalette.muted
         let pathX = 18+textWidth(tr("配置文件"),size:13)+12
-        label("~/.config/popeste",CGRect(x:pathX,y:342,width:210,height:28),size:11,muted:true).textColor = InterfacePalette.muted
+        label("~/.config/popeste",CGRect(x:pathX,y:rowY("配置文件")+5,width:210,height:28),size:11,muted:true).textColor = InterfacePalette.muted
         let openWidth = textWidth(tr("打开"),size:12)+18
-        let open = button(tr("打开"),CGRect(x:462-openWidth,y:342,width:openWidth,height:28),muted:true) { [weak self] in self?.emit("openDirectory") }
+        let open = button(tr("打开"),CGRect(x:462-openWidth,y:rowY("配置文件")+5,width:openWidth,height:28),muted:true) { [weak self] in self?.emit("openDirectory") }
         open.font = .systemFont(ofSize:12*s); open.inkColor = InterfacePalette.muted
         separator(379)
         label(tr("更改后自动保存"),CGRect(x:12,y:387,width:330,height:29),size:10,muted:true).textColor = InterfacePalette.muted
