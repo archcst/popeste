@@ -12,7 +12,7 @@ final class PickerPanel: NSPanel {
 }
 final class Picker: NSObject, NSWindowDelegate {
     let panel = PickerPanel(contentRect: NSRect(x: 0, y: 0, width: 480, height: 424), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-    private let surface = NSView()
+    private let surface = GlassSurface()
     let store: Store
     let configuration: Configuration
     let settings: Settings
@@ -37,12 +37,7 @@ final class Picker: NSObject, NSWindowDelegate {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]; panel.isReleasedWhenClosed = false
         surface.frame = panel.contentView!.bounds
         surface.autoresizingMask = [.width, .height]
-        surface.wantsLayer = true
-        surface.layer?.cornerCurve = .continuous
-        surface.layer?.masksToBounds = true
-        surface.layer?.borderWidth = 0
-        interface.view.frame = surface.bounds
-        surface.addSubview(interface.view)
+        surface.install(interface.view)
         panel.contentView = surface
         interface.action = { [weak self] name, payload in self?.handle(name, payload) }
         store.onChange = { [weak self] in self?.reload() }
@@ -135,11 +130,12 @@ final class Picker: NSObject, NSWindowDelegate {
     }
     func canQuit() -> Bool { modal = true; panel.level = .normal; defer { modal = false; panel.level = .popUpMenu }; return manager.canLeave() }
     func reload() {
-        surface.layer?.cornerRadius = 19 * configuration.value.pickerSize.scale
+        surface.update(scale: configuration.value.pickerSize.scale, dark: interfaceDark(configuration.value.appearance ?? "system"))
         panel.invalidateShadow()
         var state = settings.state
         state["prompts"] = interfacePrompts(store.search(""))
         state["scale"] = configuration.value.pickerSize.scale
+        state["glass"] = surface.glassEnabled
         interface.state = state
     }
     private func confirm(_ prompt: Prompt) {

@@ -125,6 +125,7 @@ final class NativeRow: NSView {
     var choose: (() -> Void)?
     var insert: (() -> Void)?
     var scale: CGFloat
+    var glass = false
     private var tracking: NSTrackingArea?
     override var isFlipped: Bool { true }
     init(body: String, selected: Bool, scale: CGFloat, editAction: @escaping () -> Void) {
@@ -146,16 +147,21 @@ final class NativeRow: NSView {
     override func mouseDown(with event: NSEvent) { choose?(); if event.clickCount == 2 { insert?() } }
     override func accessibilityPerformPress() -> Bool { choose?(); return true }
     override func draw(_ dirtyRect: NSRect) {
-        let background = selected ? Style.selection : edit.isHidden ? Style.canvas : InterfacePalette.hover
+        let background = selected ? Style.selection.withAlphaComponent(glass ? 0.65 : 1) : edit.isHidden ? (glass ? .clear : Style.canvas) : InterfacePalette.hover.withAlphaComponent(glass ? 0.55 : 1)
         background.setFill(); NSBezierPath(roundedRect: bounds, xRadius: 10*scale, yRadius: 10*scale).fill()
         let text = NSAttributedString(string: body, attributes: [.font: NSFont.systemFont(ofSize: 17*scale), .foregroundColor: InterfacePalette.ink])
         NSGraphicsContext.saveGraphicsState(); let area = bounds.insetBy(dx: 12*scale, dy: 0); area.clip()
+        let context = NSGraphicsContext.current!.cgContext
+        context.beginTransparencyLayer(auxiliaryInfo:nil)
         text.draw(at: NSPoint(x: area.minX, y: (bounds.height-text.size().height)/2))
         if text.size().width > area.width || !edit.isHidden {
-            let end = edit.isHidden ? area.maxX : bounds.maxX-30*scale
-            NSGradient(starting: background.withAlphaComponent(0), ending: background)?.draw(in: NSRect(x: end-32*scale, y: 0, width: 32*scale, height: bounds.height), angle: 0)
-            background.setFill(); NSRect(x: end, y: 0, width: bounds.maxX-end, height: bounds.height).fill()
+            let end = edit.isHidden ? bounds.width-10*scale : bounds.width-30*scale
+            let gradient = CGGradient(colorSpace:CGColorSpaceCreateDeviceGray(),colorComponents:[1,1,1,0],locations:[0,1],count:2)!
+            context.setBlendMode(.destinationIn)
+            context.drawLinearGradient(gradient,start:CGPoint(x:end-34*scale,y:0),end:CGPoint(x:end,y:0),options:[.drawsBeforeStartLocation,.drawsAfterEndLocation])
+            context.setBlendMode(.normal)
         }
+        context.endTransparencyLayer()
         NSGraphicsContext.restoreGraphicsState()
     }
 }

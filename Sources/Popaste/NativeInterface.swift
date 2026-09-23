@@ -217,7 +217,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func separator(_ y: CGFloat) { let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line); add(line,CGRect(x:0,y:y,width:480,height:1)) }
     private func render() {
-        view.fill = page == "settings" ? InterfacePalette.paper : Style.canvas
+        view.fill = state["glass"] as? Bool == true ? .clear : Style.canvas
+        rows.fill = view.fill
         let responder = view.window?.firstResponder
         let searchFocused = responder === search || (search.currentEditor() != nil && responder === search.currentEditor())
         let searchSelection = (search.currentEditor() as? NSTextView)?.selectedRange()
@@ -309,6 +310,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         rows.frame = CGRect(x:0,y:0,width:466*s,height:max(314*s,CGFloat(matches.count)*46*s))
         for (i,p) in matches.enumerated() {
             let row = NativeRow(body:p["body"] as? String ?? "",selected:i == selected,scale:s) { [weak self] in self?.selected = i; self?.edit(p) }
+            row.glass = state["glass"] as? Bool == true
             row.frame = CGRect(x:0,y:CGFloat(i)*46*s,width:466*s,height:46*s)
             row.choose = { [weak self] in self?.selected = i; self?.renderRows(); self?.focus() }
             row.insert = { [weak self] in self?.emit("insert",["id":p["id"] ?? ""]) }
