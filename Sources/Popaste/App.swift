@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKey.action = { [weak self] in self?.picker.toggle() }
         let mainMenu = NSMenu()
         let appItem = NSMenuItem(); let appMenu = NSMenu(title: "Popaste")
-        for (title, selector, key) in [("新建提示词", #selector(newPrompt), "n"), ("编辑所选提示词", #selector(editPrompt), "e"), ("管理提示词…", #selector(manage), "1"), ("设置…", #selector(preferences), ","), ("呼出提示词", #selector(toggle), "2"), ("退出 Popaste", #selector(quit), "q")] {
+        for (title, selector, key) in [("新建短语", #selector(newPrompt), "n"), ("编辑所选短语", #selector(editPrompt), "e"), ("管理短语…", #selector(manage), "1"), ("设置…", #selector(preferences), ","), ("呼出短语", #selector(toggle), "2"), ("退出 Popaste", #selector(quit), "q")] {
             let item = NSMenuItem(title: title, action: selector, keyEquivalent: key); item.representedObject = title; item.target = self; appMenu.addItem(item)
         }
         appItem.submenu = appMenu; mainMenu.addItem(appItem)
@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         editItem.submenu = editMenu; mainMenu.addItem(editItem); NSApp.mainMenu = mainMenu
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength); status.button?.image = NSImage(systemSymbolName: "text.quote", accessibilityDescription: "Popaste")
         let menu = NSMenu()
-        for (name, action) in [("呼出提示词", #selector(toggle)), ("新建提示词", #selector(newPrompt)), ("管理提示词…", #selector(manage)), ("设置…", #selector(preferences)), ("退出 Popaste", #selector(quit))] { let item = NSMenuItem(title: name, action: action, keyEquivalent: ""); item.representedObject = name; item.target = self; menu.addItem(item) }; status.menu = menu
+        for (name, action) in [("呼出短语", #selector(toggle)), ("新建短语", #selector(newPrompt)), ("管理短语…", #selector(manage)), ("设置…", #selector(preferences)), ("退出 Popaste", #selector(quit))] { let item = NSMenuItem(title: name, action: action, keyEquivalent: ""); item.representedObject = name; item.target = self; menu.addItem(item) }; status.menu = menu
         localizeMenus()
         do { try hotKey.register(hotKey.shortcut) } catch { showError(error); picker.show("settings") }
         if !configuration.value.onboarded { picker.show("settings"); do { try configuration.update { $0.onboarded = true } } catch { showError(error) } } else { picker.show("list") }

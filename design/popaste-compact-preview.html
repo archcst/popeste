@@ -32,43 +32,42 @@ body{margin:0;background:var(--stage);color:var(--ink);font:14px -apple-system,B
 </style>
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="icon-back" viewBox="0 0 24 24"><path d="m10 5-7 7 7 7M3 12h17"/></symbol><symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="icon-edit" viewBox="0 0 24 24"><path d="m14 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol><symbol id="icon-gear" viewBox="0 0 24 24"><path d="M4 7h4m4 0h8M4 17h8m4 0h4"/><circle cx="10" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></symbol><symbol id="icon-pin" viewBox="0 0 24 24"><path d="M8 3h8l-1 7 3 4H6l3-4zM12 14v7"/></symbol><symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol></svg>
 <div class="board">
-<header class="mast"><div class="brand">Popaste <span class="badge">紧凑浮窗 · 设计预览</span></div><nav class="modes" aria-label="预览状态"><button data-mode="list" class="active">提示词</button><button data-mode="editor">编辑</button><button data-mode="settings">设置</button></nav></header>
+<header class="mast"><div class="brand">Popaste <span class="badge">紧凑浮窗 · 设计预览</span></div><nav class="modes" aria-label="预览状态"><button data-mode="list" class="active">短语</button><button data-mode="editor">编辑</button><button data-mode="settings">设置</button></nav></header>
 <main class="stage"><div class="frame"><section class="window" aria-label="Popaste 浮窗">
-<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索短语" aria-label="搜索短语" spellcheck="false"></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建提示词" title="新建提示词（⌘N）"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="footer-shortcuts hint">⌘N 新建 · ⌘E 编辑 · ↵ 插入</span><span class="spacer"></span><button class="iconbutton" id="settingsButton" aria-label="设置" title="设置（⌘,）"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
-<div id="editor" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回提示词"><svg class="icon"><use href="#icon-back"/></svg></button><strong id="editorHeading">编辑提示词</strong><span class="spacer"></span><button class="pin" id="pin" aria-pressed="false"><svg class="icon" style="width:13px;height:13px"><use href="#icon-pin"/></svg>置顶</button></header><div class="editor"><textarea id="body" placeholder="输入提示词正文…" aria-label="提示词正文" spellcheck="false"></textarea><div class="editor-meta"><span id="characters"></span><span class="spacer"></span><span id="saveState">已保存</span></div></div><footer class="footer"><button class="iconbutton danger" id="delete" aria-label="删除提示词"><svg class="icon"><use href="#icon-trash"/></svg></button><span class="spacer"></span><span class="hint">⌘S 保存</span><button class="textbutton" data-back>取消</button><button class="primary" id="save">保存</button></footer></div>
-<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回提示词"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>语言</span><select id="language" aria-label="语言"><option value="system">跟随系统</option><option value="zh-Hans">简体中文</option><option value="en">English</option></select></div><div class="setting"><span>呼出快捷键</span><button class="shortcut" id="shortcut">⌥ A</button></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting config-row"><div class="config-label"><span>配置文件</span><span class="config-path">~/.config/popeste</span></div><button class="textbutton" id="openDirectory">打开</button></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
+<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索短语" aria-label="搜索短语" spellcheck="false"></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建短语" title="新建短语（⌘N）"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="footer-shortcuts hint">⌘N 新建 · ⌘E 编辑 · ↵ 插入</span><span class="spacer"></span><button class="iconbutton" id="settingsButton" aria-label="设置" title="设置（⌘,）"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
+<div id="editor" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回短语"><svg class="icon"><use href="#icon-back"/></svg></button><strong id="editorHeading">编辑短语</strong><span class="spacer"></span><button class="pin" id="pin" aria-pressed="false"><svg class="icon" style="width:13px;height:13px"><use href="#icon-pin"/></svg>置顶</button></header><div class="editor"><textarea id="body" placeholder="输入短语正文…" aria-label="短语正文" spellcheck="false"></textarea><div class="editor-meta"><span id="characters"></span><span class="spacer"></span><span id="saveState">已保存</span></div></div><footer class="footer"><button class="iconbutton danger" id="delete" aria-label="删除短语"><svg class="icon"><use href="#icon-trash"/></svg></button><span class="spacer"></span><span class="hint">⌘S 保存</span><button class="textbutton" data-back>取消</button><button class="primary" id="save">保存</button></footer></div>
+<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回短语"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>语言</span><select id="language" aria-label="语言"><option value="system">跟随系统</option><option value="zh-Hans">简体中文</option><option value="en">English</option></select></div><div class="setting"><span>呼出快捷键</span><button class="shortcut" id="shortcut">⌥ A</button></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting config-row"><div class="config-label"><span>配置文件</span><span class="config-path">~/.config/popeste</span></div><button class="textbutton" id="openDirectory">打开</button></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
 <div class="toast" id="toast" role="status"></div><div class="confirm" id="confirm" hidden><div class="dialog"><strong id="dialogTitle"></strong><p id="dialogText"></p><div class="dialog-actions"><button class="textbutton" id="stay">继续编辑</button><button class="primary" id="accept">放弃修改</button></div></div></div>
 </section></div><div class="caption" id="caption"><strong>一个浮窗，完成常用操作。</strong><br>⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置</div></main><footer class="legend"><span>点击浮窗内的按钮体验 · 列表每行直接显示正文</span><span>交互设计稿 · 示例数据仅在本页有效</span></footer>
 </div>
 
 <script>let interfaceLanguage = 'zh-Hans';
 const englishText = {
- '搜索短语':'Search phrases','搜索提示词':'Search prompts','新建提示词':'New prompt','新建提示词（⌘N）':'New prompt (⌘N)',
- '编辑提示词':'Edit prompt','编辑提示词（⌘E）':'Edit prompt (⌘E)','设置':'Settings','设置（⌘,）':'Settings (⌘,)',
- '返回提示词':'Back to prompts','提示词正文':'Prompt text','输入提示词正文…':'Enter prompt text…','置顶':'Pin',
- '删除提示词':'Delete prompt','取消':'Cancel','保存':'Save','⌘S 保存':'⌘S Save','完成':'Done','更改后自动保存':'Changes save automatically',
+ '搜索短语':'Search phrases','新建短语':'New phrase','新建短语（⌘N）':'New phrase (⌘N)',
+ '编辑短语':'Edit phrase','编辑短语（⌘E）':'Edit phrase (⌘E)','设置':'Settings','设置（⌘,）':'Settings (⌘,)',
+ '返回短语':'Back to phrases','短语正文':'Phrase text','输入短语正文…':'Enter phrase text…','置顶':'Pin',
+ '删除短语':'Delete phrase','取消':'Cancel','保存':'Save','⌘S 保存':'⌘S Save','完成':'Done','更改后自动保存':'Changes save automatically',
  '呼出快捷键':'Shortcut','浮窗大小':'Window size','小':'S','中':'M','大':'L','外观':'Appearance','语言':'Language',
  '跟随系统':'System','浅色':'Light','深色':'Dark','登录时启动':'Launch at login','辅助功能权限':'Accessibility',
  '配置文件':'Configuration','打开':'Open','已授权 ›':'Allowed ›','去授权 ›':'Allow access ›','请在系统设置中批准登录项':'Approve the login item in System Settings',
  '⌘N 新建 · ⌘E 编辑 · ↵ 插入':'⌘N New · ⌘E Edit · ↵ Insert',
- '没有匹配的提示词':'No matching prompts','还没有提示词':'No prompts yet',' 条':' prompts',' 字符':' characters',
- '已保存':'Saved','未保存':'Unsaved','已删除':'Deleted','请输入提示词正文':'Enter prompt text first',
+ '没有匹配的短语':'No matching phrases','还没有短语':'No phrases yet',' 条':' items',' 字符':' characters',
+ '已保存':'Saved','未保存':'Unsaved','已删除':'Deleted','请输入短语正文':'Enter phrase text first',
  '放弃未保存的修改？':'Discard unsaved changes?','当前修改尚未保存。':'Your changes have not been saved.',
- '放弃修改':'Discard','继续编辑':'Keep editing','删除这条提示词？':'Delete this prompt?','删除后无法恢复。':'This cannot be undone.','删除':'Delete',
- '按下组合键…':'Press shortcut…','请包含 ⌘ / ⌃ / ⌥':'Include ⌘ / ⌃ / ⌥','提示词':'Prompt','⌃B 返回':'⌃B Back','纯文本':'Plain text','编辑':'Edit','插入':'Insert'
+ '放弃修改':'Discard','继续编辑':'Keep editing','删除这条短语？':'Delete this phrase?','删除后无法恢复。':'This cannot be undone.','删除':'Delete',
+ '按下组合键…':'Press shortcut…','请包含 ⌘ / ⌃ / ⌥':'Include ⌘ / ⌃ / ⌥','短语':'Phrase','⌃B 返回':'⌃B Back','纯文本':'Plain text','编辑':'Edit','插入':'Insert'
 };
 const translatedText = {
  "zh-Hant": {
   "搜索短语": "搜尋短語",
-  "搜索提示词": "搜尋提示詞",
-  "新建提示词": "新增提示詞",
-  "编辑提示词": "編輯提示詞",
+  "新建短语": "新增短語",
+  "编辑短语": "編輯短語",
   "设置": "設定",
-  "返回提示词": "返回提示詞",
-  "提示词正文": "提示詞內容",
-  "输入提示词正文…": "輸入提示詞內容…",
+  "返回短语": "返回短語",
+  "短语正文": "短語內容",
+  "输入短语正文…": "輸入短語內容…",
   "置顶": "置頂",
-  "删除提示词": "刪除提示詞",
+  "删除短语": "刪除短語",
   "取消": "取消",
   "保存": "儲存",
   "完成": "完成",
@@ -90,31 +89,31 @@ const translatedText = {
   "已授权 ›": "已授權 ›",
   "去授权 ›": "前往授權 ›",
   "请在系统设置中批准登录项": "請在系統設定中核准登入項目",
-  "没有匹配的提示词": "沒有符合的提示詞",
-  "还没有提示词": "尚無提示詞",
+  "没有匹配的短语": "沒有符合的短語",
+  "还没有短语": "尚無短語",
   " 条": " 條",
   " 字符": " 字元",
   "已保存": "已儲存",
   "未保存": "未儲存",
   "已删除": "已刪除",
-  "请输入提示词正文": "請先輸入提示詞內容",
+  "请输入短语正文": "請先輸入短語內容",
   "放弃未保存的修改？": "捨棄未儲存的變更？",
   "当前修改尚未保存。": "目前變更尚未儲存。",
   "放弃修改": "捨棄變更",
   "继续编辑": "繼續編輯",
-  "删除这条提示词？": "刪除此提示詞？",
+  "删除这条短语？": "刪除此短語？",
   "删除后无法恢复。": "刪除後無法復原。",
   "删除": "刪除",
   "按下组合键…": "按下組合鍵…",
   "请包含 ⌘ / ⌃ / ⌥": "請包含 ⌘ / ⌃ / ⌥",
-  "提示词": "提示詞",
+  "短语": "短語",
   "纯文本": "純文字",
   "编辑": "編輯",
   "插入": "插入",
   "返回": "返回",
   "新建": "新增",
-  "新建提示词（⌘N）": "新增提示詞 (⌘N)",
-  "编辑提示词（⌘E）": "編輯提示詞 (⌘E)",
+  "新建短语（⌘N）": "新增短語 (⌘N)",
+  "编辑短语（⌘E）": "編輯短語 (⌘E)",
   "设置（⌘,）": "設定 (⌘,)",
   "⌘S 保存": "⌘S 儲存",
   "⌃B 返回": "⌃B 返回",
@@ -122,15 +121,14 @@ const translatedText = {
  },
  "ja": {
   "搜索短语": "フレーズを検索",
-  "搜索提示词": "プロンプトを検索",
-  "新建提示词": "新規プロンプト",
-  "编辑提示词": "プロンプトを編集",
+  "新建短语": "新規フレーズ",
+  "编辑短语": "フレーズを編集",
   "设置": "設定",
-  "返回提示词": "一覧に戻る",
-  "提示词正文": "プロンプト本文",
-  "输入提示词正文…": "本文を入力…",
+  "返回短语": "一覧に戻る",
+  "短语正文": "フレーズ本文",
+  "输入短语正文…": "本文を入力…",
   "置顶": "固定",
-  "删除提示词": "プロンプトを削除",
+  "删除短语": "フレーズを削除",
   "取消": "キャンセル",
   "保存": "保存",
   "完成": "完了",
@@ -152,31 +150,31 @@ const translatedText = {
   "已授权 ›": "許可済み ›",
   "去授权 ›": "許可する ›",
   "请在系统设置中批准登录项": "システム設定でログイン項目を許可してください",
-  "没有匹配的提示词": "一致するプロンプトがありません",
-  "还没有提示词": "プロンプトはまだありません",
+  "没有匹配的短语": "一致するフレーズがありません",
+  "还没有短语": "フレーズはまだありません",
   " 条": " 件",
   " 字符": " 文字",
   "已保存": "保存済み",
   "未保存": "未保存",
   "已删除": "削除済み",
-  "请输入提示词正文": "本文を入力してください",
+  "请输入短语正文": "本文を入力してください",
   "放弃未保存的修改？": "未保存の変更を破棄しますか？",
   "当前修改尚未保存。": "変更は保存されていません。",
   "放弃修改": "破棄",
   "继续编辑": "編集を続ける",
-  "删除这条提示词？": "このプロンプトを削除しますか？",
+  "删除这条短语？": "このフレーズを削除しますか？",
   "删除后无法恢复。": "この操作は取り消せません。",
   "删除": "削除",
   "按下组合键…": "キーを押してください…",
   "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥ を含めてください",
-  "提示词": "プロンプト",
+  "短语": "フレーズ",
   "纯文本": "プレーンテキスト",
   "编辑": "編集",
   "插入": "挿入",
   "返回": "戻る",
   "新建": "新規",
-  "新建提示词（⌘N）": "新規プロンプト (⌘N)",
-  "编辑提示词（⌘E）": "プロンプトを編集 (⌘E)",
+  "新建短语（⌘N）": "新規フレーズ (⌘N)",
+  "编辑短语（⌘E）": "フレーズを編集 (⌘E)",
   "设置（⌘,）": "設定 (⌘,)",
   "⌘S 保存": "⌘S 保存",
   "⌃B 返回": "⌃B 戻る",
@@ -184,15 +182,14 @@ const translatedText = {
  },
  "ko": {
   "搜索短语": "문구 검색",
-  "搜索提示词": "프롬프트 검색",
-  "新建提示词": "새 프롬프트",
-  "编辑提示词": "프롬프트 편집",
+  "新建短语": "새 문구",
+  "编辑短语": "문구 편집",
   "设置": "설정",
-  "返回提示词": "목록으로 돌아가기",
-  "提示词正文": "프롬프트 내용",
-  "输入提示词正文…": "내용 입력…",
+  "返回短语": "목록으로 돌아가기",
+  "短语正文": "문구 내용",
+  "输入短语正文…": "내용 입력…",
   "置顶": "고정",
-  "删除提示词": "프롬프트 삭제",
+  "删除短语": "문구 삭제",
   "取消": "취소",
   "保存": "저장",
   "完成": "완료",
@@ -214,31 +211,31 @@ const translatedText = {
   "已授权 ›": "허용됨 ›",
   "去授权 ›": "권한 허용 ›",
   "请在系统设置中批准登录项": "시스템 설정에서 로그인 항목을 허용하세요",
-  "没有匹配的提示词": "일치하는 프롬프트가 없습니다",
-  "还没有提示词": "아직 프롬프트가 없습니다",
+  "没有匹配的短语": "일치하는 문구가 없습니다",
+  "还没有短语": "아직 문구가 없습니다",
   " 条": "개",
   " 字符": "자",
   "已保存": "저장됨",
   "未保存": "저장 안 됨",
   "已删除": "삭제됨",
-  "请输入提示词正文": "내용을 입력하세요",
+  "请输入短语正文": "내용을 입력하세요",
   "放弃未保存的修改？": "저장하지 않은 변경 사항을 버릴까요?",
   "当前修改尚未保存。": "변경 사항이 저장되지 않았습니다.",
   "放弃修改": "버리기",
   "继续编辑": "계속 편집",
-  "删除这条提示词？": "이 프롬프트를 삭제할까요?",
+  "删除这条短语？": "이 문구를 삭제할까요?",
   "删除后无法恢复。": "이 작업은 되돌릴 수 없습니다.",
   "删除": "삭제",
   "按下组合键…": "단축키를 누르세요…",
   "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥를 포함하세요",
-  "提示词": "프롬프트",
+  "短语": "문구",
   "纯文本": "일반 텍스트",
   "编辑": "편집",
   "插入": "삽입",
   "返回": "뒤로",
   "新建": "새로 만들기",
-  "新建提示词（⌘N）": "새 프롬프트 (⌘N)",
-  "编辑提示词（⌘E）": "프롬프트 편집 (⌘E)",
+  "新建短语（⌘N）": "새 문구 (⌘N)",
+  "编辑短语（⌘E）": "문구 편집 (⌘E)",
   "设置（⌘,）": "설정 (⌘,)",
   "⌘S 保存": "⌘S 저장",
   "⌃B 返回": "⌃B 뒤로",
@@ -246,15 +243,14 @@ const translatedText = {
  },
  "fr": {
   "搜索短语": "Rechercher des expressions",
-  "搜索提示词": "Rechercher des prompts",
-  "新建提示词": "Nouveau prompt",
-  "编辑提示词": "Modifier le prompt",
+  "新建短语": "Nouveau texte",
+  "编辑短语": "Modifier le texte",
   "设置": "Réglages",
-  "返回提示词": "Retour aux prompts",
-  "提示词正文": "Texte du prompt",
-  "输入提示词正文…": "Saisir le texte…",
+  "返回短语": "Retour aux textes",
+  "短语正文": "Contenu du texte",
+  "输入短语正文…": "Saisir le texte…",
   "置顶": "Épingler",
-  "删除提示词": "Supprimer le prompt",
+  "删除短语": "Supprimer le texte",
   "取消": "Annuler",
   "保存": "Enregistrer",
   "完成": "Terminé",
@@ -276,47 +272,46 @@ const translatedText = {
   "已授权 ›": "Autorisé ›",
   "去授权 ›": "Autoriser ›",
   "请在系统设置中批准登录项": "Autorisez l’ouverture à la connexion dans les Réglages Système",
-  "没有匹配的提示词": "Aucun résultat",
-  "还没有提示词": "Aucun prompt",
-  " 条": " prompts",
+  "没有匹配的短语": "Aucun résultat",
+  "还没有短语": "Aucun texte",
+  " 条": " textes",
   " 字符": " caractères",
   "已保存": "Enregistré",
   "未保存": "Non enregistré",
   "已删除": "Supprimé",
-  "请输入提示词正文": "Saisissez le texte du prompt",
+  "请输入短语正文": "Saisissez le contenu du texte",
   "放弃未保存的修改？": "Abandonner les modifications ?",
   "当前修改尚未保存。": "Les modifications ne sont pas enregistrées.",
   "放弃修改": "Abandonner",
   "继续编辑": "Continuer à modifier",
-  "删除这条提示词？": "Supprimer ce prompt ?",
+  "删除这条短语？": "Supprimer ce texte ?",
   "删除后无法恢复。": "Cette action est irréversible.",
   "删除": "Supprimer",
   "按下组合键…": "Appuyez sur les touches…",
   "请包含 ⌘ / ⌃ / ⌥": "Inclure ⌘ / ⌃ / ⌥",
-  "提示词": "Prompt",
+  "短语": "Texte",
   "纯文本": "Texte brut",
   "编辑": "Modifier",
   "插入": "Insérer",
   "返回": "Retour",
   "新建": "Nouveau",
-  "新建提示词（⌘N）": "Nouveau prompt (⌘N)",
-  "编辑提示词（⌘E）": "Modifier le prompt (⌘E)",
+  "新建短语（⌘N）": "Nouveau texte (⌘N)",
+  "编辑短语（⌘E）": "Modifier le texte (⌘E)",
   "设置（⌘,）": "Réglages (⌘,)",
   "⌘S 保存": "⌘S Enregistrer",
   "⌃B 返回": "⌃B Retour",
   "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Nouveau · ⌘E Modifier · ↵ Insérer"
  },
  "de": {
-  "搜索短语": "Phrasen suchen",
-  "搜索提示词": "Prompts suchen",
-  "新建提示词": "Neuer Prompt",
-  "编辑提示词": "Prompt bearbeiten",
+  "搜索短语": "Textn suchen",
+  "新建短语": "Neuer Text",
+  "编辑短语": "Text bearbeiten",
   "设置": "Einstellungen",
-  "返回提示词": "Zurück zur Liste",
-  "提示词正文": "Prompt-Text",
-  "输入提示词正文…": "Text eingeben…",
+  "返回短语": "Zurück zur Liste",
+  "短语正文": "Text-Text",
+  "输入短语正文…": "Text eingeben…",
   "置顶": "Anheften",
-  "删除提示词": "Prompt löschen",
+  "删除短语": "Text löschen",
   "取消": "Abbrechen",
   "保存": "Speichern",
   "完成": "Fertig",
@@ -338,31 +333,31 @@ const translatedText = {
   "已授权 ›": "Erlaubt ›",
   "去授权 ›": "Erlauben ›",
   "请在系统设置中批准登录项": "Anmeldeobjekt in den Systemeinstellungen erlauben",
-  "没有匹配的提示词": "Keine passenden Prompts",
-  "还没有提示词": "Noch keine Prompts",
-  " 条": " Prompts",
+  "没有匹配的短语": "Keine passenden Texte",
+  "还没有短语": "Noch keine Texte",
+  " 条": " Texte",
   " 字符": " Zeichen",
   "已保存": "Gespeichert",
   "未保存": "Nicht gespeichert",
   "已删除": "Gelöscht",
-  "请输入提示词正文": "Bitte Prompt-Text eingeben",
+  "请输入短语正文": "Bitte Text-Text eingeben",
   "放弃未保存的修改？": "Änderungen verwerfen?",
   "当前修改尚未保存。": "Änderungen wurden nicht gespeichert.",
   "放弃修改": "Verwerfen",
   "继续编辑": "Weiter bearbeiten",
-  "删除这条提示词？": "Diesen Prompt löschen?",
+  "删除这条短语？": "Diesen Text löschen?",
   "删除后无法恢复。": "Dies kann nicht rückgängig gemacht werden.",
   "删除": "Löschen",
   "按下组合键…": "Tastenkombination drücken…",
   "请包含 ⌘ / ⌃ / ⌥": "⌘ / ⌃ / ⌥ verwenden",
-  "提示词": "Prompt",
+  "短语": "Text",
   "纯文本": "Nur Text",
   "编辑": "Bearbeiten",
   "插入": "Einfügen",
   "返回": "Zurück",
   "新建": "Neu",
-  "新建提示词（⌘N）": "Neuer Prompt (⌘N)",
-  "编辑提示词（⌘E）": "Prompt bearbeiten (⌘E)",
+  "新建短语（⌘N）": "Neuer Text (⌘N)",
+  "编辑短语（⌘E）": "Text bearbeiten (⌘E)",
   "设置（⌘,）": "Einstellungen (⌘,)",
   "⌘S 保存": "⌘S Speichern",
   "⌃B 返回": "⌃B Zurück",
@@ -370,15 +365,14 @@ const translatedText = {
  },
  "es": {
   "搜索短语": "Buscar frases",
-  "搜索提示词": "Buscar prompts",
-  "新建提示词": "Nuevo prompt",
-  "编辑提示词": "Editar prompt",
+  "新建短语": "Nuevo texto",
+  "编辑短语": "Editar texto",
   "设置": "Ajustes",
-  "返回提示词": "Volver a los prompts",
-  "提示词正文": "Texto del prompt",
-  "输入提示词正文…": "Escribe el texto…",
+  "返回短语": "Volver a los textos",
+  "短语正文": "Texto del texto",
+  "输入短语正文…": "Escribe el texto…",
   "置顶": "Fijar",
-  "删除提示词": "Eliminar prompt",
+  "删除短语": "Eliminar texto",
   "取消": "Cancelar",
   "保存": "Guardar",
   "完成": "Listo",
@@ -400,31 +394,31 @@ const translatedText = {
   "已授权 ›": "Permitido ›",
   "去授权 ›": "Permitir ›",
   "请在系统设置中批准登录项": "Autoriza el inicio de sesión en Ajustes del Sistema",
-  "没有匹配的提示词": "No hay coincidencias",
-  "还没有提示词": "Aún no hay prompts",
-  " 条": " prompts",
+  "没有匹配的短语": "No hay coincidencias",
+  "还没有短语": "Aún no hay textos",
+  " 条": " textos",
   " 字符": " caracteres",
   "已保存": "Guardado",
   "未保存": "Sin guardar",
   "已删除": "Eliminado",
-  "请输入提示词正文": "Escribe el texto del prompt",
+  "请输入短语正文": "Escribe el texto del texto",
   "放弃未保存的修改？": "¿Descartar los cambios?",
   "当前修改尚未保存。": "Los cambios no se han guardado.",
   "放弃修改": "Descartar",
   "继续编辑": "Seguir editando",
-  "删除这条提示词？": "¿Eliminar este prompt?",
+  "删除这条短语？": "¿Eliminar este texto?",
   "删除后无法恢复。": "Esta acción no se puede deshacer.",
   "删除": "Eliminar",
   "按下组合键…": "Pulsa las teclas…",
   "请包含 ⌘ / ⌃ / ⌥": "Incluye ⌘ / ⌃ / ⌥",
-  "提示词": "Prompt",
+  "短语": "Texto",
   "纯文本": "Texto sin formato",
   "编辑": "Editar",
   "插入": "Insertar",
   "返回": "Volver",
   "新建": "Nuevo",
-  "新建提示词（⌘N）": "Nuevo prompt (⌘N)",
-  "编辑提示词（⌘E）": "Editar prompt (⌘E)",
+  "新建短语（⌘N）": "Nuevo texto (⌘N)",
+  "编辑短语（⌘E）": "Editar texto (⌘E)",
   "设置（⌘,）": "Ajustes (⌘,)",
   "⌘S 保存": "⌘S Guardar",
   "⌃B 返回": "⌃B Volver",
@@ -449,6 +443,7 @@ function captureStaticLabels(){
  });
 }
 function localizeStatic(){document.documentElement.lang=interfaceLanguage;staticLabels.forEach(apply=>apply())}
+
 
 // Keep marked IME text out of every filtering path, including background refreshes.
 function createCommittedSearch(input, onCommit) {
@@ -530,17 +525,17 @@ function render(){
   const body=document.createElement('button');body.className='row';body.textContent=p.body.replace(/\s+/g,' ');body.title=p.body;
   body.setAttribute('aria-pressed',String(i===selected));body.onmousedown=e=>e.preventDefault();body.onclick=()=>selectRow(i);
   body.ondblclick=()=>send('insert',{id:p.id});
-  const editButton=document.createElement('button');editButton.className='iconbutton row-edit';editButton.title=t('编辑提示词（⌘E）');editButton.setAttribute('aria-label',t('编辑提示词'));
+  const editButton=document.createElement('button');editButton.className='iconbutton row-edit';editButton.title=t('编辑短语（⌘E）');editButton.setAttribute('aria-label',t('编辑短语'));
   editButton.innerHTML='<svg class="icon"><use href="#icon-edit"/></svg>';
   editButton.onclick=e=>{e.stopPropagation();selected=i;edit(p)};
   row.append(body,editButton);$('rows').append(row);
  });
  if(!rows.length){
-  const empty=document.createElement('div');empty.className='empty';empty.textContent=prompts.length?t('没有匹配的提示词'):t('还没有提示词');
-  if(!prompts.length){const add=document.createElement('button');add.className='primary';add.textContent=t('新建提示词');add.onclick=()=>edit(null);empty.append(add)}
+  const empty=document.createElement('div');empty.className='empty';empty.textContent=prompts.length?t('没有匹配的短语'):t('还没有短语');
+  if(!prompts.length){const add=document.createElement('button');add.className='primary';add.textContent=t('新建短语');add.onclick=()=>edit(null);empty.append(add)}
   $('rows').append(empty);
  }
- $('count').textContent=rows.length+t(' 条');
+ $('count').textContent=rows.length+(interfaceLanguage==='en'&&rows.length===1?' item':t(' 条'));
  $('rows').children[selected]?.scrollIntoView({block:'nearest'});
  requestAnimationFrame(updateRowFades);
 }
@@ -548,14 +543,14 @@ function dirty(){return view==='editor'&&($('body').value!==(editing?.body||'')|
 function dialog(title,description,label,fn){$('dialogTitle').textContent=title;$('dialogText').textContent=description;$('accept').textContent=label;$('stay').textContent=label===t('删除')?t('取消'):t('继续编辑');accept=fn;$('confirm').hidden=false}
 $('stay').onclick=()=>{$('confirm').hidden=true};$('accept').onclick=()=>{$('confirm').hidden=true;accept?.()};
 function navigate(next,fn){if(dirty()){dialog(t('放弃未保存的修改？'),t('当前修改尚未保存。'),t('放弃修改'),()=>{show(next);fn?.()})}else{show(next);fn?.()}}
-function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'提示词全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
-function edit(p){navigate('editor',()=>{editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';$('editorHeading').textContent=p?t('编辑提示词'):t('新建提示词');$('delete').disabled=!p;editorState();$('body').focus()})}
+function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'短语全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
+function edit(p){navigate('editor',()=>{editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';$('editorHeading').textContent=p?t('编辑短语'):t('新建短语');$('delete').disabled=!p;editorState();$('body').focus()})}
 function editorState(){$('characters').textContent=Array.from($('body').value).length+t(' 字符');$('pin').setAttribute('aria-pressed',String(pinned));$('saveState').textContent=dirty()?t('未保存'):t('已保存');send('draft',{id:editing?.id||'',body:$('body').value,pinned})}
-function save(){if(saving)return;if(!$('body').value.trim()){toast('请输入提示词正文');return}saving=true;$('save').disabled=true;send('save',{id:editing?.id||'',body:$('body').value,pinned})}
+function save(){if(saving)return;if(!$('body').value.trim()){toast('请输入短语正文');return}saving=true;$('save').disabled=true;send('save',{id:editing?.id||'',body:$('body').value,pinned})}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1800)}
 $('new').onclick=()=>edit(null);$('settingsButton').onclick=()=>navigate('settings');
 all('[data-back]').forEach(b=>b.onclick=()=>navigate('list'));all('[data-mode]').forEach(b=>b.onclick=()=>b.dataset.mode==='editor'?edit(matches()[selected]):navigate(b.dataset.mode));$('body').oninput=editorState;$('pin').onclick=()=>{pinned=!pinned;editorState()};$('save').onclick=save;
-$('delete').onclick=()=>dialog(t('删除这条提示词？'),t('删除后无法恢复。'),t('删除'),()=>{send('delete',{id:editing.id})});
+$('delete').onclick=()=>dialog(t('删除这条短语？'),t('删除后无法恢复。'),t('删除'),()=>{send('delete',{id:editing.id})});
 all('[data-scale]').forEach(b=>b.onclick=()=>send('size',{value:{'0.8':'small','0.9':'medium','1':'large'}[b.dataset.scale]}));
 const settingMenus=[];
 function makeSelect(id,action,options){
@@ -582,7 +577,7 @@ document.addEventListener('keydown',e=>{if(composing||searchInput.isComposing||e
 
 for(const el of [$('body'),$('query')]){el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off')}
 const previewPage=document.createElement('div');previewPage.id='preview';previewPage.className='page';
-previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回提示词">←</button><strong>提示词</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div id="previewBody"></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary">插入</button></footer>';
+previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回短语">←</button><strong>短语</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div id="previewBody"></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary">插入</button></footer>';
 document.querySelector('.window').prepend(previewPage);
 previewPage.querySelector('.head button').onclick=()=>show('list');previewPage.querySelector('.textbutton').onclick=()=>edit(matches()[selected]);previewPage.querySelector('.primary').onclick=()=>{if(matches()[selected])send('insert',{id:matches()[selected].id})};
 function preview(){$('previewBody').textContent=matches()[selected].body;show('preview')}
@@ -598,7 +593,7 @@ window.nativeState=next=>{
  $('permission').textContent=next.trusted?t('已授权 ›'):t('去授权 ›');
  $('permission').style.color=next.trusted?'':'var(--muted)';
  shortcut=next.shortcut||'⌃⌥Space';if(!recording)$('shortcut').textContent=shortcut;
- if(view==='editor'){$('editorHeading').textContent=editing?t('编辑提示词'):t('新建提示词');editorState()}
+ if(view==='editor'){$('editorHeading').textContent=editing?t('编辑短语'):t('新建短语');editorState()}
  render();
 };
 window.nativeOpen=destination=>{

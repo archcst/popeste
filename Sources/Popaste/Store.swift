@@ -12,7 +12,7 @@ struct Archive: Codable { var version = 2; var prompts: [Prompt] }
 struct ImportSummary { var added = 0; var duplicate = 0 }
 enum StoreError: LocalizedError {
     case invalid, version
-    var errorDescription: String? { self == .invalid ? tr("提示词正文不能为空，或文件中存在重复 ID。") : tr("不支持此备份版本。") }
+    var errorDescription: String? { self == .invalid ? tr("短语正文不能为空，或文件中存在重复 ID。") : tr("不支持此备份版本。") }
 }
 final class Store {
     private(set) var prompts: [Prompt] = []
