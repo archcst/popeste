@@ -17,6 +17,17 @@ final class Settings {
             let directory = configuration.url.deletingLastPathComponent()
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             if !NSWorkspace.shared.open(directory) { throw NSError(domain: "Popaste", code: 2, userInfo: [NSLocalizedDescriptionKey: tr("无法打开配置目录。")]) }
+        case "nativeShortcut":
+            guard let code = payload["keyCode"] as? Int, let rawFlags = payload["flags"] as? UInt else { throw invalidShortcut() }
+            let flags = NSEvent.ModifierFlags(rawValue: rawFlags)
+            guard !flags.intersection([.control,.option,.command]).isEmpty,
+                  ![36,48,51,53,123,124,125,126].contains(code) else { throw invalidShortcut() }
+            var modifiers: UInt32 = 0, label = ""
+            for (flag, mask, symbol) in [(NSEvent.ModifierFlags.control,UInt32(4096),"⌃"),(.option,2048,"⌥"),(.shift,512,"⇧"),(.command,256,"⌘")] {
+                if flags.contains(flag) { modifiers |= mask; label += symbol }
+            }
+            label += code == 49 ? "Space" : (payload["characters"] as? String ?? "").uppercased()
+            try hotKey.register(Shortcut(code: UInt32(code), modifiers: modifiers, label: label))
         case "shortcut": try record(payload)
         case "login":
             if payload["enabled"] as? Bool == true { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }

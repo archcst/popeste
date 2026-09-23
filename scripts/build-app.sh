@@ -1,13 +1,11 @@
 #!/bin/zsh
 set -euo pipefail
 cd "${0:A:h:h}"
-python3 scripts/sync-design.py
 swift build -c release
 app="$PWD/dist/Popaste.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp .build/release/Popaste "$app/Contents/MacOS/Popaste"
 rm -rf "$app/Contents/Resources/Popaste_Popaste.bundle"
-cp -R .build/release/Popaste_Popaste.bundle "$app/Contents/Resources/Popaste_Popaste.bundle"
 cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

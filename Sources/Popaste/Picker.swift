@@ -3,7 +3,11 @@ import AppKit
 final class PickerPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
-    // Web content owns cancellation and draft confirmation; silence the AppKit fallback.
+    // The native interface owns cancellation and draft confirmation.
+    var keyHandler: ((NSEvent) -> Bool)?
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown && keyHandler?(event) == true { return }; super.sendEvent(event)
+    }
     override func cancelOperation(_ sender: Any?) {}
 }
 final class Picker: NSObject, NSWindowDelegate {
@@ -13,7 +17,7 @@ final class Picker: NSObject, NSWindowDelegate {
     let configuration: Configuration
     let settings: Settings
     let manager: Manager
-    let interface = WebInterface(mode: "list")
+    let interface = NativeInterface(mode: "list")
     let insertion = Insertion()
     private var monitors: [Any] = []
     var preferencesChanged: (() -> Void)?
@@ -28,9 +32,11 @@ final class Picker: NSObject, NSWindowDelegate {
         manager = Manager(store: store)
         super.init()
         panel.delegate = self
+        panel.keyHandler = { [weak self] in self?.interface.handleKey($0) ?? false }
         panel.title = "Popaste"; panel.level = .popUpMenu; panel.hasShadow = true; panel.isOpaque = false; panel.backgroundColor = .clear
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]; panel.isReleasedWhenClosed = false
         surface.frame = panel.contentView!.bounds
+        surface.autoresizingMask = [.width, .height]
         surface.wantsLayer = true
         surface.layer?.cornerCurve = .continuous
         surface.layer?.masksToBounds = true
@@ -104,7 +110,7 @@ final class Picker: NSObject, NSWindowDelegate {
         var frame = PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: 424*scale))
         if collapsed { frame.origin.y = frame.maxY - 57*scale; frame.size.height = 57*scale }
         panel.setFrame(frame, display: false)
-        reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); panel.makeFirstResponder(interface.view)
+        reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); interface.focus()
         if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
             if let self, !self.modal, event.window !== self.panel { self.dismiss(restore: false) }; return event
         }) { monitors.append(m) }

@@ -1,10 +1,10 @@
 import AppKit
 
 enum Style {
-    static let canvas = NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(calibratedWhite: 0.15, alpha: 1) : .white }
-    static let sidebar = NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(calibratedWhite: 0.12, alpha: 1) : NSColor(calibratedWhite: 0.96, alpha: 1) }
-    static let line = NSColor.separatorColor.withAlphaComponent(0.35)
-    static let selection = NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(calibratedWhite: 0.23, alpha: 1) : NSColor(calibratedWhite: 0.92, alpha: 1) }
+    static let canvas = InterfacePalette.paper
+    static let sidebar = InterfacePalette.hover
+    static let line = InterfacePalette.line
+    static let selection = InterfacePalette.selected
 }
 class Surface: NSView {
     var fill = Style.canvas
