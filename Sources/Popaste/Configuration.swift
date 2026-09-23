@@ -18,6 +18,8 @@ struct Preferences: Codable, Equatable {
     var launchAtLogin = false
     var appearance: String?
     var language: String?
+    var navigationSchemes: [String]?
+    var resolvedNavigationSchemes: [String] { (navigationSchemes ?? ["arrows"]).filter { ["arrows", "emacs", "vim"].contains($0) } }
     static let supportedLanguages = ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "de", "es"]
     static func resolveLanguage(_ selection: String?, preferred: [String] = Locale.preferredLanguages) -> String {
         if let selection, supportedLanguages.contains(selection) { return selection }

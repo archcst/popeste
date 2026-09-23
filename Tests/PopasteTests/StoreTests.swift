@@ -98,6 +98,11 @@ final class StoreTests {
             XCTAssertEqual(reloaded.value.language, language)
             if language != "system" { XCTAssertEqual(reloaded.value.resolvedLanguage, language) }
         }
+        XCTAssertEqual(config.value.resolvedNavigationSchemes, ["arrows"])
+        for schemes in [["arrows", "vim"], ["emacs", "vim"], []] {
+            try config.update { $0.navigationSchemes = schemes }
+            XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.resolvedNavigationSchemes, schemes)
+        }
         let permission = try FileManager.default.attributesOfItem(atPath: config.url.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(permission?.intValue, 0o600)
         try Data("broken".utf8).write(to: config.url)

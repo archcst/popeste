@@ -29,20 +29,27 @@ body{margin:0;background:var(--stage);color:var(--ink);font:14px -apple-system,B
 .setting-menu[hidden]{display:none}.setting-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:5px;font-size:12px}
 .config-label{display:flex;align-items:center;gap:12px;min-width:0}.config-path{font-size:11px;color:var(--muted);white-space:nowrap}.config-row{gap:6px}
 #settings .setting{min-height:45px}#settingsButton .icon{width:18px;height:18px}
+.window.compact{height:57px}.window.compact #list .list,.window.compact #list > .footer{display:none}.window.compact #list .head{border-bottom:0}
+.expand-hint{display:none;flex-shrink:0;white-space:nowrap;pointer-events:none}.window.compact .expand-hint{display:inline}
+.insert-button{display:flex;align-items:center;gap:7px}.insert-button .icon{width:13px;height:13px}
+.shortcut-controls{position:relative;display:flex;align-items:center;gap:12px}
+.option-check{display:inline-block;width:18px;color:var(--ink)}.shortcut-controls #keymap{max-width:180px}.shortcut-controls #keymap > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg"><symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 5 5"/></symbol><symbol id="icon-back" viewBox="0 0 24 24"><path d="m10 5-7 7 7 7M3 12h17"/></symbol><symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="icon-edit" viewBox="0 0 24 24"><path d="m14 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol><symbol id="icon-gear" viewBox="0 0 24 24"><path d="M4 7h4m4 0h8M4 17h8m4 0h4"/><circle cx="10" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></symbol><symbol id="icon-pin" viewBox="0 0 24 24"><path d="M8 3h8l-1 7 3 4H6l3-4zM12 14v7"/></symbol><symbol id="icon-trash" viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol></svg>
 <div class="board">
 <header class="mast"><div class="brand">Popaste <span class="badge">紧凑浮窗 · 设计预览</span></div><nav class="modes" aria-label="预览状态"><button data-mode="list" class="active">短语</button><button data-mode="editor">编辑</button><button data-mode="settings">设置</button></nav></header>
-<main class="stage"><div class="frame"><section class="window" aria-label="Popaste 浮窗">
-<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索短语" aria-label="搜索短语" spellcheck="false"></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建短语" title="新建短语（⌘N）"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="footer-shortcuts hint">⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入</span><span class="spacer"></span><button class="iconbutton" id="settingsButton" aria-label="设置" title="设置（⌘,）"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
+<main class="stage"><div class="frame"><section class="window compact" aria-label="Popaste 浮窗">
+<div id="list" class="page active"><header class="head"><svg class="icon muted"><use href="#icon-search"/></svg><input id="query" placeholder="搜索短语" aria-label="搜索短语" spellcheck="false"><span class="expand-hint hint"><span id="expandKeys">↓</span> <span>展开</span></span></header><div class="list" id="rows"></div><footer class="footer"><button class="iconbutton" id="new" aria-label="新建短语" title="新建短语（⌘N）"><svg class="icon"><use href="#icon-plus"/></svg></button><span class="hint" id="count"></span><span class="footer-shortcuts hint">⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入</span><span class="spacer"></span><button class="iconbutton" id="settingsButton" aria-label="设置" title="设置（⌘,）"><svg class="icon"><use href="#icon-gear"/></svg></button></footer></div>
 <div id="editor" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回短语"><svg class="icon"><use href="#icon-back"/></svg></button><strong id="editorHeading">编辑短语</strong><span class="spacer"></span><button class="pin" id="pin" aria-pressed="false"><svg class="icon" style="width:13px;height:13px"><use href="#icon-pin"/></svg>置顶</button></header><div class="editor"><textarea id="body" placeholder="输入短语正文…" aria-label="短语正文" spellcheck="false"></textarea><div class="editor-meta"><span id="characters"></span><span class="spacer"></span><span id="saveState">已保存</span></div></div><footer class="footer"><button class="iconbutton danger" id="delete" aria-label="删除短语"><svg class="icon"><use href="#icon-trash"/></svg></button><span class="spacer"></span><span class="footer-shortcuts hint"><span>⌘S 保存</span>  ·  Esc <span>取消</span></span><button class="primary" id="save">保存</button></footer></div>
-<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回短语"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>语言</span><select id="language" aria-label="语言"><option value="system">跟随系统</option><option value="zh-Hans">简体中文</option><option value="en">English</option></select></div><div class="setting"><span>呼出快捷键</span><button class="shortcut" id="shortcut">⌥ A</button></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting config-row"><div class="config-label"><span>配置文件</span><span class="config-path">~/.config/popeste</span></div><button class="textbutton" id="openDirectory">打开</button></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
+<div id="settings" class="page"><header class="head"><button class="iconbutton" data-back aria-label="返回短语"><svg class="icon"><use href="#icon-back"/></svg></button><strong>设置</strong><span class="spacer"></span><span class="subtle">Popaste</span></header><div class="settings"><div class="setting"><span>语言</span><select id="language" aria-label="语言"><option value="system">跟随系统</option><option value="zh-Hans">简体中文</option><option value="en">English</option></select></div><div class="setting"><span>快捷键方案</span><div class="shortcut-controls"><button class="shortcut" id="shortcut" aria-label="呼出快捷键">⌥ A</button><select id="keymap" aria-label="快捷键方案"><option value="emacs">Emacs</option><option value="vim">Vim</option></select></div></div><div class="setting"><span>浮窗大小</span><div class="segments" aria-label="浮窗大小"><button data-scale="0.8" aria-pressed="false">小</button><button data-scale="0.9" aria-pressed="true">中</button><button data-scale="1" aria-pressed="false">大</button></div></div><div class="setting"><span>外观</span><select id="appearance" aria-label="外观"><option value="system">跟随系统</option><option value="light" selected>浅色</option><option value="dark">深色</option></select></div><div class="setting"><span>登录时启动</span><button class="toggle" id="login" role="switch" aria-label="登录时启动" aria-checked="false"><i></i></button></div><div class="setting"><span>辅助功能权限</span><button class="permission" id="permission">已授权 ›</button></div><div class="setting config-row"><div class="config-label"><span>配置文件</span><span class="config-path">~/.config/popeste</span></div><button class="textbutton" id="openDirectory">打开</button></div></div><footer class="footer"><span class="hint">更改后自动保存</span><span class="spacer"></span><button class="textbutton" data-back>完成</button></footer></div>
 <div class="toast" id="toast" role="status"></div><div class="confirm" id="confirm" hidden><div class="dialog"><strong id="dialogTitle"></strong><p id="dialogText"></p><div class="dialog-actions"><button class="textbutton" id="stay">继续编辑</button><button class="primary" id="accept">放弃修改</button></div></div></div>
 </section></div><div class="caption" id="caption"><strong>一个浮窗，完成常用操作。</strong><br>⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置</div></main><footer class="legend"><span>点击浮窗内的按钮体验 · 列表每行直接显示正文</span><span>交互设计稿 · 示例数据仅在本页有效</span></footer>
 </div>
 
 <script>let interfaceLanguage = 'zh-Hans';
 const englishText = {
+ '快捷键方案':'Key bindings','返回':'Back',
+ '展开':'Expand',
  '搜索短语':'Search phrases','新建短语':'New phrase','新建短语（⌘N）':'New phrase (⌘N)',
  '编辑短语':'Edit phrase','编辑短语（⌘E）':'Edit phrase (⌘E)','设置':'Settings','设置（⌘,）':'Settings (⌘,)',
  '返回短语':'Back to phrases','短语正文':'Phrase text','输入短语正文…':'Enter phrase text…','置顶':'Pin',
@@ -59,6 +66,8 @@ const englishText = {
 };
 const translatedText = {
  "zh-Hant": {
+  "快捷键方案": "快捷鍵方案",
+  "展开": "展開",
   "搜索短语": "搜尋短語",
   "新建短语": "新增短語",
   "编辑短语": "編輯短語",
@@ -120,6 +129,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
  },
  "ja": {
+  "快捷键方案": "キー設定",
+  "展开": "展開",
   "搜索短语": "フレーズを検索",
   "新建短语": "新規フレーズ",
   "编辑短语": "フレーズを編集",
@@ -181,6 +192,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
  },
  "ko": {
+  "快捷键方案": "키 설정",
+  "展开": "펼치기",
   "搜索短语": "문구 검색",
   "新建短语": "새 문구",
   "编辑短语": "문구 편집",
@@ -242,6 +255,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
  },
  "fr": {
+  "快捷键方案": "Raccourcis",
+  "展开": "Développer",
   "搜索短语": "Rechercher des expressions",
   "新建短语": "Nouveau texte",
   "编辑短语": "Modifier le texte",
@@ -303,6 +318,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
  },
  "de": {
+  "快捷键方案": "Tastenbelegung",
+  "展开": "Ausklappen",
   "搜索短语": "Textn suchen",
   "新建短语": "Neuer Text",
   "编辑短语": "Text bearbeiten",
@@ -364,6 +381,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
  },
  "es": {
+  "快捷键方案": "Atajos de teclado",
+  "展开": "Expandir",
   "搜索短语": "Buscar frases",
   "新建短语": "Nuevo texto",
   "编辑短语": "Editar texto",
@@ -445,6 +464,8 @@ function captureStaticLabels(){
 function localizeStatic(){document.documentElement.lang=interfaceLanguage;staticLabels.forEach(apply=>apply())}
 
 
+
+
 // Keep marked IME text out of every filtering path, including background refreshes.
 function createCommittedSearch(input, onCommit) {
     let value = input.value;
@@ -489,7 +510,7 @@ window.webkit={messageHandlers:{native:{postMessage(message){queueMicrotask(()=>
   p.body=message.body;p.pinned=message.pinned;previewPush();window.nativeSaved(p.id);return;
  }
  if(action==='delete'){previewState.prompts=previewState.prompts.filter(p=>p.id!==message.id);previewPush();window.nativeSaved('');return}
- if(action==='language'||action==='appearance')previewState[action]=value;
+ if(action==='language'||action==='appearance'||action==='navigationSchemes')previewState[action]=value;
  if(action==='size')previewState.scale={small:.8,medium:.9,large:1}[value];
  if(action==='login')previewState.login=message.enabled;
  if(action==='openDirectory'){window.nativeToast('设计预览 · ~/.config/popeste');return}
@@ -504,10 +525,25 @@ const $=id=>document.getElementById(id), all=s=>[...document.querySelectorAll(s)
 let prompts=[];
 const send=(action,payload={})=>window.webkit.messageHandlers.native.postMessage({action,...payload});
 let selected=0, editing=null, pinned=false, view='list', timer, accept=null, recording=false, shortcut='⌥ A', saving=false;
+let navigationSchemes=['arrows'];
+const navigationKeys={emacs:{down:'n',up:'p',back:'b',forward:'f'},vim:{down:'j',up:'k',back:'h',forward:'l'}};
+function navigationKey(event,action){
+ if(event.metaKey||event.altKey||event.shiftKey)return false;
+ const arrows={down:'ArrowDown',up:'ArrowUp',back:'ArrowLeft',forward:'ArrowRight'};
+ return navigationSchemes.some(scheme=>scheme==='arrows'?!event.ctrlKey&&event.key===arrows[action]:event.ctrlKey&&event.key===navigationKeys[scheme][action]);
+}
+function navigationLabels(action){return navigationSchemes.map(scheme=>scheme==='arrows'?{down:'↓',back:'←'}[action]:'⌃'+navigationKeys[scheme][action].toUpperCase()).join(' / ')}
+let listExpanded=false;
+function syncLayout(){
+ const collapsed=view==='list'&&!listExpanded;
+ document.querySelector('.window').classList.toggle('compact',collapsed);
+ send('layout',{page:view,collapsed});
+}
+function expandList(){listExpanded=true;syncLayout();render()}
 let composing=false;
 document.addEventListener('compositionstart',()=>composing=true);
 document.addEventListener('compositionend',()=>composing=false);
-const searchInput=createCommittedSearch($('query'),()=>{selected=0;render()});
+const searchInput=createCommittedSearch($('query'),()=>{selected=0;if(searchInput.value.length)expandList();else render()});
 function matches(){const q=searchInput.value.toLowerCase().trim();return prompts.filter(p=>q.split(/\s+/).every(w=>p.body.toLowerCase().includes(w)))}
 function selectRow(index){
  selected=index;
@@ -543,7 +579,7 @@ function dirty(){return view==='editor'&&($('body').value!==(editing?.body||'')|
 function dialog(title,description,label,fn){$('dialogTitle').textContent=title;$('dialogText').textContent=description;$('accept').textContent=label;$('stay').textContent=label===t('删除')?t('取消'):t('继续编辑');accept=fn;$('confirm').hidden=false}
 $('stay').onclick=()=>{$('confirm').hidden=true};$('accept').onclick=()=>{$('confirm').hidden=true;accept?.()};
 function navigate(next,fn){if(dirty()){dialog(t('放弃未保存的修改？'),t('当前修改尚未保存。'),t('放弃修改'),()=>{show(next);fn?.()})}else{show(next);fn?.()}}
-function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'短语全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
+function show(next){if(view==='editor')send('discard');view=next;if(next==='list')listExpanded=true;syncLayout();recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'短语全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
 function edit(p){
  const scrollTop=view==='preview'?$('previewBody').scrollTop:0;
  navigate('editor',()=>{
@@ -560,19 +596,30 @@ all('[data-back]').forEach(b=>b.onclick=()=>navigate('list'));all('[data-mode]')
 $('delete').onclick=()=>dialog(t('删除这条短语？'),t('删除后无法恢复。'),t('删除'),()=>{send('delete',{id:editing.id})});
 all('[data-scale]').forEach(b=>b.onclick=()=>send('size',{value:{'0.8':'small','0.9':'medium','1':'large'}[b.dataset.scale]}));
 const settingMenus=[];
-function makeSelect(id,action,options){
+function makeSelect(id,action,options,multiple=false){
  const button=document.createElement('button');button.id=id;button.className='select-control';button.setAttribute('aria-expanded','false');
  $(id).replaceWith(button);
  const label=document.createElement('span');button.append(label);
  const arrow=document.createElementNS('http://www.w3.org/2000/svg','svg');arrow.setAttribute('viewBox','0 0 16 16');arrow.setAttribute('class','icon chevron');arrow.innerHTML='<path d="m4.5 6 3.5 3.5L11.5 6"/>';button.append(arrow);
  const menu=document.createElement('div');menu.className='setting-menu';menu.hidden=true;button.parentElement.append(menu);
  const control={button,menu,label,options,update(value){
-  label.textContent=t(options.find(option=>option[0]===value)?.[1]||options[0][1]);menu.replaceChildren();
-  for(const [value,title] of options){const item=document.createElement('button');item.textContent=t(title);item.onclick=()=>{control.close();send(action,{value})};menu.append(item)}
+  const values=multiple?value:[value];
+  const titles=options.filter(option=>values.includes(option[0])).map(option=>t(option[1]));
+  label.replaceChildren();
+  titles.forEach((title,index)=>{if(index){const separator=document.createElement('span');separator.className='muted';separator.textContent=' / ';label.append(separator)}label.append(document.createTextNode(title))});
+  if(!titles.length)label.textContent='—';menu.replaceChildren();
+  for(const [optionValue,title] of options){
+   const item=document.createElement('button');const checked=values.includes(optionValue);
+   const check=document.createElement('span');check.className='option-check';check.textContent=checked?'✓':'';check.setAttribute('aria-hidden','true');
+   item.append(check,document.createTextNode(t(title)));
+   if(multiple){item.setAttribute('role','checkbox');item.setAttribute('aria-checked',String(checked))}else item.setAttribute('aria-pressed',String(checked));
+   item.onclick=()=>{if(!multiple)control.close();send(action,{value:multiple?(checked?values.filter(v=>v!==optionValue):[...values,optionValue]):optionValue})};menu.append(item)
+  }
  },close(){menu.hidden=true;button.setAttribute('aria-expanded','false')}};
  settingMenus.push(control);button.onclick=()=>{const opening=menu.hidden;settingMenus.forEach(m=>m.close());menu.hidden=!opening;button.setAttribute('aria-expanded',String(opening))};
  return control;
 }
+const keymapControl=makeSelect('keymap','navigationSchemes',[['arrows','↑ ↓ ← →'],['emacs','Emacs'],['vim','Vim']],true);
 const appearanceControl=makeSelect('appearance','appearance',[['system','跟随系统'],['light','浅色'],['dark','深色']]);
 const languageControl=makeSelect('language','language',[['system','跟随系统'],['zh-Hans','简体中文'],['zh-Hant','繁體中文'],['en','English'],['ja','日本語'],['ko','한국어'],['fr','Français'],['de','Deutsch'],['es','Español']]);
 document.addEventListener('click',event=>{settingMenus.forEach(m=>{if(!m.menu.contains(event.target)&&!m.button.contains(event.target))m.close()})});
@@ -580,16 +627,19 @@ document.addEventListener('click',event=>{settingMenus.forEach(m=>{if(!m.menu.co
 $('login').onclick=()=>send('login',{enabled:$('login').getAttribute('aria-checked')!=='true'});
 $('permission').onclick=()=>send('permission');$('openDirectory').onclick=()=>send('openDirectory');
 $('shortcut').onclick=()=>{recording=true;send('recording',{enabled:true});$('shortcut').textContent=t('按下组合键…')};
-document.addEventListener('keydown',e=>{if(composing||searchInput.isComposing||e.isComposing||e.keyCode===229)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}if(e.key==='Escape'&&settingMenus.some(m=>!m.menu.hidden)){settingMenus.forEach(m=>m.close());return;}if(!$('confirm').hidden){if(e.key==='Escape')$('confirm').hidden=true;return}if(recording){e.preventDefault();if(e.key==='Escape'){recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;return}if(['Meta','Control','Shift','Alt'].includes(e.key))return;if(!(e.metaKey||e.ctrlKey||e.altKey)){toast('请包含 ⌘ / ⌃ / ⌥');return}send('shortcut',{code:e.code,key:e.key,control:e.ctrlKey,option:e.altKey,command:e.metaKey,shift:e.shiftKey});recording=false;send('recording',{enabled:false});return}if(e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){const key=e.key.toLowerCase();if(key==='n'){e.preventDefault();edit(null);return}if(key===','){e.preventDefault();navigate('settings');return}if(key==='e'&&(view==='list'||view==='preview')){e.preventDefault();if(matches()[selected])edit(matches()[selected]);return}}if(view==='editor'&&(e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();save()}if(e.key==='Escape'){if(view!=='list')navigate('list');else send('dismiss')}if(view==='preview'&&((e.ctrlKey&&e.key==='b')||(e.key==='ArrowLeft'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey))){e.preventDefault();show('list')}if(view==='preview'&&e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(view==='list'){if(e.key==='ArrowDown'||e.ctrlKey&&e.key==='n'){e.preventDefault();selected++;render()}if(e.key==='ArrowUp'||e.ctrlKey&&e.key==='p'){e.preventDefault();selected--;render()}if(e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(((e.ctrlKey&&e.key==='f')||(e.key==='ArrowRight'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey))&&matches().length){e.preventDefault();preview()}if(e.metaKey&&e.shiftKey&&e.key.toLowerCase()==='c'&&matches().length){e.preventDefault();send('copy',{body:matches()[selected].body})}}});render();
+document.addEventListener('keydown',e=>{if(composing||searchInput.isComposing||e.isComposing||e.keyCode===229)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();}if(e.key==='Escape'&&settingMenus.some(m=>!m.menu.hidden)){settingMenus.forEach(m=>m.close());return;}if(!$('confirm').hidden){if(e.key==='Escape')$('confirm').hidden=true;return}if(recording){e.preventDefault();if(e.key==='Escape'){recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;return}if(['Meta','Control','Shift','Alt'].includes(e.key))return;if(!(e.metaKey||e.ctrlKey||e.altKey)){toast('请包含 ⌘ / ⌃ / ⌥');return}send('shortcut',{code:e.code,key:e.key,control:e.ctrlKey,option:e.altKey,command:e.metaKey,shift:e.shiftKey});recording=false;send('recording',{enabled:false});return}if(e.metaKey&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){const key=e.key.toLowerCase();if(key==='n'){e.preventDefault();edit(null);return}if(key===','){e.preventDefault();navigate('settings');return}if(key==='e'&&(view==='list'||view==='preview')){e.preventDefault();if(matches()[selected])edit(matches()[selected]);return}}if(view==='editor'&&(e.metaKey||e.ctrlKey)&&e.key==='s'){e.preventDefault();save()}if(e.key==='Escape'){if(view!=='list')navigate('list');else send('dismiss')}if(view==='preview'&&navigationKey(e,'back')){e.preventDefault();show('list')}if(view==='preview'&&e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(view==='list'){if(!listExpanded&&(e.key==='Enter'||['down','up','forward'].some(action=>navigationKey(e,action)))){e.preventDefault();selected=0;expandList();return;}if(navigationKey(e,'down')){e.preventDefault();selected++;render()}if(navigationKey(e,'up')){e.preventDefault();selected--;render()}if(e.key==='Enter'&&matches().length){e.preventDefault();send('insert',{id:matches()[selected].id})}if(navigationKey(e,'forward')&&matches().length){e.preventDefault();preview()}if(e.metaKey&&e.shiftKey&&e.key.toLowerCase()==='c'&&matches().length){e.preventDefault();send('copy',{body:matches()[selected].body})}}});render();
 
 for(const el of [$('body'),$('query')]){el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off')}
 const previewPage=document.createElement('div');previewPage.id='preview';previewPage.className='page';
-previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回短语">←</button><strong>短语</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div class="editor"><textarea id="previewBody" readonly aria-label="短语正文" spellcheck="false"></textarea><div class="editor-meta" aria-hidden="true" style="visibility:hidden"><span>0</span></div></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary">插入</button></footer>';
+previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回短语">←</button><strong>短语</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div class="editor"><textarea id="previewBody" readonly aria-label="短语正文" spellcheck="false"></textarea><div class="editor-meta" aria-hidden="true" style="visibility:hidden"><span>0</span></div></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary insert-button"><span>插入</span><svg class="icon" aria-hidden="true" viewBox="0 0 20 20"><path d="M16 4v7H4m4-4-4 4 4 4"/></svg></button></footer>';
 document.querySelector('.window').prepend(previewPage);
 previewPage.querySelector('.head button').onclick=()=>show('list');previewPage.querySelector('.textbutton').onclick=()=>edit(matches()[selected]);previewPage.querySelector('.primary').onclick=()=>{if(matches()[selected])send('insert',{id:matches()[selected].id})};
 function preview(){$('previewBody').value=matches()[selected].body;show('preview');$('previewBody').scrollTop=0}
 window.nativeState=next=>{
  interfaceLanguage=next.resolvedLanguage||'zh-Hans';localizeStatic();
+ navigationSchemes=next.navigationSchemes||['arrows'];keymapControl.update(navigationSchemes);
+ $('expandKeys').textContent=navigationLabels('down')||'↵';
+ previewPage.querySelector('kbd').textContent=(navigationLabels('back')||'Esc')+' '+t('返回');
  const selectedID=matches()[selected]?.id;prompts=next.prompts||[];
  const newIndex=matches().findIndex(p=>p.id===selectedID);if(newIndex>=0)selected=newIndex;
  document.documentElement.style.setProperty('--scale',String(next.scale||1));
@@ -610,9 +660,9 @@ window.nativeOpen=destination=>{
  if(destination==='edit'){if((view==='list'||view==='preview')&&matches()[selected])edit(matches()[selected]);return}
  recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;
  if(destination==='resume'){
-  if(view==='list'){searchInput.reset();selected=0;render();$('query').focus()}
+  if(view==='list'){searchInput.reset();selected=0;listExpanded=false;syncLayout();render();$('query').focus()}
   else if(view==='editor')$('body').focus();
- }else navigate(destination);
+ }else if(destination==='list'){searchInput.reset();navigate('list');listExpanded=false;syncLayout()}else navigate(destination);
  send('refresh');
 };
 window.nativeSaveFailed=()=>{saving=false;$('save').disabled=false};

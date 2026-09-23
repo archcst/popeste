@@ -21,6 +21,8 @@ final class Picker: NSObject, NSWindowDelegate {
     private var busy = false
     private var modal = false
     private var recording = false
+    private var collapsed = true
+    private var currentPage = "list"
     init(store: Store, configuration: Configuration, settings: Settings) {
         self.store = store; self.configuration = configuration; self.settings = settings
         manager = Manager(store: store)
@@ -66,6 +68,10 @@ final class Picker: NSObject, NSWindowDelegate {
         do {
             switch name {
             case "ready", "refresh": reload()
+            case "layout":
+                currentPage = payload["page"] as? String ?? "list"
+                collapsed = currentPage == "list" && payload["collapsed"] as? Bool == true
+                resize()
             case "recording": recording = payload["enabled"] as? Bool ?? false
             case "draft": manager.receive(payload)
             case "discard": manager.draft = PromptDraft()
@@ -89,11 +95,15 @@ final class Picker: NSObject, NSWindowDelegate {
     func show(_ destination: String = "resume") {
         guard !busy, !modal else { return }
         if panel.isVisible { reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); return }
+        collapsed = destination == "list" || (destination == "resume" && currentPage == "list")
         let caret = insertion.capture(), mouse = NSEvent.mouseLocation
         let point = caret.map { NSPoint(x: $0.minX, y: $0.minY) } ?? mouse
         let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main!
         let scale = configuration.value.pickerSize.scale
-        panel.setFrame(PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: 424*scale)), display: false)
+        // Reserve room for expansion so the search field stays anchored near screen edges.
+        var frame = PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: 424*scale))
+        if collapsed { frame.origin.y = frame.maxY - 57*scale; frame.size.height = 57*scale }
+        panel.setFrame(frame, display: false)
         reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); panel.makeFirstResponder(interface.view)
         if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
             if let self, !self.modal, event.window !== self.panel { self.dismiss(restore: false) }; return event
@@ -107,7 +117,7 @@ final class Picker: NSObject, NSWindowDelegate {
         let scale = configuration.value.pickerSize.scale
         let screen = panel.screen ?? NSScreen.main!
         let area = screen.visibleFrame.insetBy(dx: 8, dy: 8)
-        let width = min(480*scale, area.width), height = min(424*scale, area.height)
+        let width = min(480*scale, area.width), height = min((collapsed ? 57 : 424)*scale, area.height, max(57*scale, panel.frame.maxY-area.minY))
         let x = min(max(panel.frame.minX, area.minX), area.maxX-width)
         let y = min(max(panel.frame.maxY-height, area.minY), area.maxY-height)
         panel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)

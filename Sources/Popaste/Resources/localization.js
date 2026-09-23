@@ -1,5 +1,7 @@
 let interfaceLanguage = 'zh-Hans';
 const englishText = {
+ '快捷键方案':'Key bindings','返回':'Back',
+ '展开':'Expand',
  '搜索短语':'Search phrases','新建短语':'New phrase','新建短语（⌘N）':'New phrase (⌘N)',
  '编辑短语':'Edit phrase','编辑短语（⌘E）':'Edit phrase (⌘E)','设置':'Settings','设置（⌘,）':'Settings (⌘,)',
  '返回短语':'Back to phrases','短语正文':'Phrase text','输入短语正文…':'Enter phrase text…','置顶':'Pin',
@@ -16,6 +18,8 @@ const englishText = {
 };
 const translatedText = {
  "zh-Hant": {
+  "快捷键方案": "快捷鍵方案",
+  "展开": "展開",
   "搜索短语": "搜尋短語",
   "新建短语": "新增短語",
   "编辑短语": "編輯短語",
@@ -77,6 +81,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
  },
  "ja": {
+  "快捷键方案": "キー設定",
+  "展开": "展開",
   "搜索短语": "フレーズを検索",
   "新建短语": "新規フレーズ",
   "编辑短语": "フレーズを編集",
@@ -138,6 +144,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
  },
  "ko": {
+  "快捷键方案": "키 설정",
+  "展开": "펼치기",
   "搜索短语": "문구 검색",
   "新建短语": "새 문구",
   "编辑短语": "문구 편집",
@@ -199,6 +207,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
  },
  "fr": {
+  "快捷键方案": "Raccourcis",
+  "展开": "Développer",
   "搜索短语": "Rechercher des expressions",
   "新建短语": "Nouveau texte",
   "编辑短语": "Modifier le texte",
@@ -260,6 +270,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
  },
  "de": {
+  "快捷键方案": "Tastenbelegung",
+  "展开": "Ausklappen",
   "搜索短语": "Textn suchen",
   "新建短语": "Neuer Text",
   "编辑短语": "Text bearbeiten",
@@ -321,6 +333,8 @@ const translatedText = {
   "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
  },
  "es": {
+  "快捷键方案": "Atajos de teclado",
+  "展开": "Expandir",
   "搜索短语": "Buscar frases",
   "新建短语": "Nuevo texto",
   "编辑短语": "Editar texto",
