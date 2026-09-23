@@ -43,7 +43,14 @@ function dialog(title,description,label,fn){$('dialogTitle').textContent=title;$
 $('stay').onclick=()=>{$('confirm').hidden=true};$('accept').onclick=()=>{$('confirm').hidden=true;accept?.()};
 function navigate(next,fn){if(dirty()){dialog(t('放弃未保存的修改？'),t('当前修改尚未保存。'),t('放弃修改'),()=>{show(next);fn?.()})}else{show(next);fn?.()}}
 function show(next){if(view==='editor')send('discard');view=next;recording=false;send('recording',{enabled:false});$('shortcut').textContent=shortcut;all('.page').forEach(e=>e.classList.toggle('active',e.id===next));all('[data-mode]').forEach(e=>e.classList.toggle('active',e.dataset.mode===next));if(next==='list'){render();$('query').focus()}$('caption').replaceChildren();const strong=document.createElement('strong');strong.textContent={list:'一个浮窗，完成常用操作。',editor:'直接编辑正文，保存后回到列表。',settings:'常用设置，一屏放下。',preview:'短语全文'}[next];$('caption').append(strong,document.createElement('br'),{list:'⌘N 新建 · ⌘E 编辑选中项 · ⌘, 设置',editor:'新建、修改、置顶和删除，都留在同一个浮窗里。',settings:'快捷键、语言、外观和配置文件都在这里。',preview:'Ctrl+B 返回列表'}[next])}
-function edit(p){navigate('editor',()=>{editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';$('editorHeading').textContent=p?t('编辑短语'):t('新建短语');$('delete').disabled=!p;editorState();$('body').focus()})}
+function edit(p){
+ const scrollTop=view==='preview'?$('previewBody').scrollTop:0;
+ navigate('editor',()=>{
+  editing=p||null;pinned=!!p?.pinned;$('body').value=p?.body||'';
+  $('editorHeading').textContent=p?t('编辑短语'):t('新建短语');$('delete').disabled=!p;editorState();
+  $('body').setSelectionRange(0,0);$('body').focus({preventScroll:true});$('body').scrollTop=scrollTop;
+ });
+}
 function editorState(){$('characters').textContent=Array.from($('body').value).length+t(' 字符');$('pin').setAttribute('aria-pressed',String(pinned));$('saveState').textContent=dirty()?t('未保存'):t('已保存');send('draft',{id:editing?.id||'',body:$('body').value,pinned})}
 function save(){if(saving)return;if(!$('body').value.trim()){toast('请输入短语正文');return}saving=true;$('save').disabled=true;send('save',{id:editing?.id||'',body:$('body').value,pinned})}
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('toast').classList.remove('show'),1800)}
@@ -76,10 +83,10 @@ document.addEventListener('keydown',e=>{if(composing||searchInput.isComposing||e
 
 for(const el of [$('body'),$('query')]){el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off')}
 const previewPage=document.createElement('div');previewPage.id='preview';previewPage.className='page';
-previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回短语">←</button><strong>短语</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div id="previewBody"></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary">插入</button></footer>';
+previewPage.innerHTML='<header class="head"><button class="iconbutton" aria-label="返回短语">←</button><strong>短语</strong><span class="spacer"></span><kbd>⌃B 返回</kbd></header><div class="editor"><textarea id="previewBody" readonly aria-label="短语正文" spellcheck="false"></textarea><div class="editor-meta" aria-hidden="true" style="visibility:hidden"><span>0</span></div></div><footer class="footer"><span class="hint">纯文本</span><span class="spacer"></span><button class="textbutton">编辑</button><button class="primary">插入</button></footer>';
 document.querySelector('.window').prepend(previewPage);
 previewPage.querySelector('.head button').onclick=()=>show('list');previewPage.querySelector('.textbutton').onclick=()=>edit(matches()[selected]);previewPage.querySelector('.primary').onclick=()=>{if(matches()[selected])send('insert',{id:matches()[selected].id})};
-function preview(){$('previewBody').textContent=matches()[selected].body;show('preview')}
+function preview(){$('previewBody').value=matches()[selected].body;show('preview');$('previewBody').scrollTop=0}
 window.nativeState=next=>{
  interfaceLanguage=next.resolvedLanguage||'zh-Hans';localizeStatic();
  const selectedID=matches()[selected]?.id;prompts=next.prompts||[];

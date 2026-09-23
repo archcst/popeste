@@ -7,7 +7,7 @@ const englishText = {
  '呼出快捷键':'Shortcut','浮窗大小':'Window size','小':'S','中':'M','大':'L','外观':'Appearance','语言':'Language',
  '跟随系统':'System','浅色':'Light','深色':'Dark','登录时启动':'Launch at login','辅助功能权限':'Accessibility',
  '配置文件':'Configuration','打开':'Open','已授权 ›':'Allowed ›','去授权 ›':'Allow access ›','请在系统设置中批准登录项':'Approve the login item in System Settings',
- '⌘N 新建 · ⌘E 编辑 · ↵ 插入':'⌘N New · ⌘E Edit · ↵ Insert',
+ '⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入':'⌘N New  ·  ⌘E Edit  ·  ↵ Insert',
  '没有匹配的短语':'No matching phrases','还没有短语':'No phrases yet',' 条':' items',' 字符':' characters',
  '已保存':'Saved','未保存':'Unsaved','已删除':'Deleted','请输入短语正文':'Enter phrase text first',
  '放弃未保存的修改？':'Discard unsaved changes?','当前修改尚未保存。':'Your changes have not been saved.',
@@ -74,7 +74,7 @@ const translatedText = {
   "设置（⌘,）": "設定 (⌘,)",
   "⌘S 保存": "⌘S 儲存",
   "⌃B 返回": "⌃B 返回",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 新增 · ⌘E 編輯 · ↵ 插入"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
  },
  "ja": {
   "搜索短语": "フレーズを検索",
@@ -135,7 +135,7 @@ const translatedText = {
   "设置（⌘,）": "設定 (⌘,)",
   "⌘S 保存": "⌘S 保存",
   "⌃B 返回": "⌃B 戻る",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 新規 · ⌘E 編集 · ↵ 挿入"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
  },
  "ko": {
   "搜索短语": "문구 검색",
@@ -196,7 +196,7 @@ const translatedText = {
   "设置（⌘,）": "설정 (⌘,)",
   "⌘S 保存": "⌘S 저장",
   "⌃B 返回": "⌃B 뒤로",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N 새로 만들기 · ⌘E 편집 · ↵ 삽입"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
  },
  "fr": {
   "搜索短语": "Rechercher des expressions",
@@ -257,7 +257,7 @@ const translatedText = {
   "设置（⌘,）": "Réglages (⌘,)",
   "⌘S 保存": "⌘S Enregistrer",
   "⌃B 返回": "⌃B Retour",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Nouveau · ⌘E Modifier · ↵ Insérer"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
  },
  "de": {
   "搜索短语": "Textn suchen",
@@ -318,7 +318,7 @@ const translatedText = {
   "设置（⌘,）": "Einstellungen (⌘,)",
   "⌘S 保存": "⌘S Speichern",
   "⌃B 返回": "⌃B Zurück",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Neu · ⌘E Bearbeiten · ↵ Einfügen"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
  },
  "es": {
   "搜索短语": "Buscar frases",
@@ -379,7 +379,7 @@ const translatedText = {
   "设置（⌘,）": "Ajustes (⌘,)",
   "⌘S 保存": "⌘S Guardar",
   "⌃B 返回": "⌃B Volver",
-  "⌘N 新建 · ⌘E 编辑 · ↵ 插入": "⌘N Nuevo · ⌘E Editar · ↵ Insertar"
+  "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nuevo  ·  ⌘E Editar  ·  ↵ Insertar"
  }
 };
 function t(text){return interfaceLanguage==='zh-Hans' ? text : (translatedText[interfaceLanguage]?.[text] || englishText[text] || text)}

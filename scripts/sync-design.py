@@ -13,7 +13,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:transparent}
 .board{margin:0;padding:0;max-width:none}.mast,.caption,.legend{display:none!important}
 .stage{display:block;min-height:0}.frame{zoom:var(--scale,1);max-width:none}
 .window{width:calc(100vw / var(--scale,1));height:calc(100vh / var(--scale,1));max-width:none;box-shadow:none;border-radius:0}
-#previewBody{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.9;padding:15px 18px;overflow:auto;flex:1;font-size:14px}
 """
 html = html.replace('</style>', override + '</style>')
 script = (root / 'Sources/Popaste/Resources/localization.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/search-input.js').read_text() + '\n' + (root / 'Sources/Popaste/Resources/interface.js').read_text()
