@@ -4,6 +4,9 @@ import Foundation
 enum InterfaceText {
     static let translations: [String: [String: String]] = [
 "en": [
+"磨砂玻璃": "Frosted glass",
+"液态玻璃": "Liquid Glass",
+"玻璃样式": "Glass style",
 "Vim 编辑模式": "Vim editing",
 "普通模式": "Normal",
 "插入模式": "Insert",
@@ -70,6 +73,9 @@ enum InterfaceText {
 "插入": "Insert"
 ],
 "zh-Hant": [
+"磨砂玻璃": "磨砂玻璃",
+"液态玻璃": "液態玻璃",
+"玻璃样式": "玻璃樣式",
 "Vim 编辑模式": "Vim 編輯模式",
 "普通模式": "普通模式",
 "插入模式": "插入模式",
@@ -137,6 +143,9 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
 ],
 "ja": [
+"磨砂玻璃": "すりガラス",
+"液态玻璃": "Liquid Glass",
+"玻璃样式": "ガラスのスタイル",
 "Vim 编辑模式": "Vim 編集モード",
 "普通模式": "ノーマル",
 "插入模式": "挿入",
@@ -204,6 +213,9 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
 ],
 "ko": [
+"磨砂玻璃": "반투명 유리",
+"液态玻璃": "Liquid Glass",
+"玻璃样式": "글래스 스타일",
 "Vim 编辑模式": "Vim 편집 모드",
 "普通模式": "일반 모드",
 "插入模式": "입력 모드",
@@ -271,6 +283,9 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
 ],
 "fr": [
+"磨砂玻璃": "Verre dépoli",
+"液态玻璃": "Verre liquide",
+"玻璃样式": "Style de verre",
 "Vim 编辑模式": "Édition Vim",
 "普通模式": "Normal",
 "插入模式": "Insertion",
@@ -338,6 +353,9 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
 ],
 "de": [
+"磨砂玻璃": "Milchglas",
+"液态玻璃": "Flüssigglas",
+"玻璃样式": "Glasstil",
 "Vim 编辑模式": "Vim-Bearbeitung",
 "普通模式": "Normal",
 "插入模式": "Einfügen",
@@ -405,6 +423,9 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
 ],
 "es": [
+"磨砂玻璃": "Vidrio esmerilado",
+"液态玻璃": "Vidrio líquido",
+"玻璃样式": "Estilo de cristal",
 "Vim 编辑模式": "Edición Vim",
 "普通模式": "Normal",
 "插入模式": "Inserción",

@@ -17,6 +17,8 @@ struct Preferences: Codable, Equatable {
     var onboarded = false
     var launchAtLogin = false
     var appearance: String?
+    var glassStyle: String?
+    var resolvedGlassStyle: String { glassStyle == "regular" ? "regular" : "clear" }
     var language: String?
     var vimEditing: Bool?
     var navigationSchemes: [String]?

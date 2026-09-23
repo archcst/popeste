@@ -15,7 +15,7 @@ final class GlassSurface: NSView {
         if #available(macOS 26.0, *), !NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
            ProcessInfo.processInfo.environment["POPASTE_GLASS"] != "0" {
             let glass = NSGlassEffectView(frame: bounds)
-            glass.style = .regular
+            glass.style = .clear
             glass.autoresizingMask = [.width, .height]
             glass.contentView = content
             addSubview(glass)
@@ -28,10 +28,11 @@ final class GlassSurface: NSView {
         content.frame = bounds
     }
 
-    func update(scale: CGFloat, dark: Bool) {
+    func update(scale: CGFloat, dark: Bool, style: String) {
         appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         layer?.cornerRadius = 19 * scale
         if #available(macOS 26.0, *), let glass = effect as? NSGlassEffectView {
+            glass.style = style == "regular" ? .regular : .clear
             glass.cornerRadius = 19 * scale
         }
     }

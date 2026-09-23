@@ -130,7 +130,7 @@ final class Picker: NSObject, NSWindowDelegate {
     }
     func canQuit() -> Bool { modal = true; panel.level = .normal; defer { modal = false; panel.level = .popUpMenu }; return manager.canLeave() }
     func reload() {
-        surface.update(scale: configuration.value.pickerSize.scale, dark: interfaceDark(configuration.value.appearance ?? "system"))
+        surface.update(scale: configuration.value.pickerSize.scale, dark: interfaceDark(configuration.value.appearance ?? "system"), style: configuration.value.resolvedGlassStyle)
         panel.invalidateShadow()
         var state = settings.state
         state["prompts"] = interfacePrompts(store.search(""))
