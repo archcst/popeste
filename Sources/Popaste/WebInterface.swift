@@ -7,7 +7,7 @@ final class WebInterface: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     var action: ((String, [String: Any]) -> Void)?
     var state: [String: Any] = [:] { didSet { push() } }
     private var ready = false
-    private var openPending = false
+    private var openPending: String?
     init(mode: String) {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .nonPersistent()
@@ -32,16 +32,20 @@ final class WebInterface: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.frameInfo.isMainFrame, message.frameInfo.request.url?.isFileURL == true,
               let body = message.body as? [String: Any], let name = body["action"] as? String else { return }
-        if name == "ready" { ready = true; push(); if openPending { open() } }
+        if name == "ready" { ready = true; push(); if let destination = openPending { open(destination) } }
         action?(name, body)
     }
     private func push() {
         guard ready, let data = try? JSONSerialization.data(withJSONObject: state, options: [.fragmentsAllowed]), let json = String(data: data, encoding: .utf8) else { return }
         view.evaluateJavaScript("window.nativeState(\(json))", completionHandler: nil)
     }
-    func open() {
-        openPending = !ready
-        if ready { view.evaluateJavaScript("window.nativeOpen()", completionHandler: nil) }
+    func open(_ destination: String = "resume") {
+        openPending = ready ? nil : destination
+        if ready { call("nativeOpen", destination) }
+    }
+    func call(_ name: String, _ argument: Any) {
+        guard let data = try? JSONSerialization.data(withJSONObject: [argument]), let json = String(data: data, encoding: .utf8) else { return }
+        view.evaluateJavaScript("window.\(name)(\(json)[0])", completionHandler: nil)
     }
     func toast(_ text: String) {
         guard let data = try? JSONSerialization.data(withJSONObject: [text]), let json = String(data: data, encoding: .utf8) else { return }
@@ -51,5 +55,5 @@ final class WebInterface: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         decisionHandler(navigationAction.request.url?.isFileURL == true && navigationAction.navigationType == .other ? .allow : .cancel)
     }
 }
-func interfacePrompts(_ prompts: [Prompt]) -> [[String: Any]] { prompts.map { ["id": $0.id.uuidString, "body": $0.body] } }
+func interfacePrompts(_ prompts: [Prompt]) -> [[String: Any]] { prompts.map { ["id": $0.id.uuidString, "body": $0.body, "pinned": $0.pinned] } }
 func interfaceDark(_ appearance: String = "system") -> Bool { appearance == "dark" || (appearance == "system" && NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua) }

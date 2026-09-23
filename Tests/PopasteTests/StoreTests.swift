@@ -83,13 +83,31 @@ final class StoreTests {
         for size in PickerSize.allCases {
             try config.update { $0.pickerSize = size }
             XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.pickerSize, size)
-            let frame = PickerPlacement.frame(caret: nil, mouse: CGPoint(x: 100, y: 800), visibleScreen: CGRect(x: 0, y: 0, width: 1400, height: 1000), desiredSize: CGSize(width: 510*size.scale, height: 410*size.scale))
-            XCTAssertEqual(frame.width, 510*size.scale); XCTAssertEqual(frame.height, 410*size.scale)
+            let frame = PickerPlacement.frame(caret: nil, mouse: CGPoint(x: 100, y: 800), visibleScreen: CGRect(x: 0, y: 0, width: 1400, height: 1000), desiredSize: CGSize(width: 480*size.scale, height: 424*size.scale))
+            XCTAssertEqual(frame.width, 480*size.scale); XCTAssertEqual(frame.height, 424*size.scale)
         }
         let permission = try FileManager.default.attributesOfItem(atPath: config.url.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(permission?.intValue, 0o600)
         try Data("broken".utf8).write(to: config.url)
         XCTAssertThrowsError(try Configuration(directory: destination, legacy: defaults))
+    }
+    func testDraftSavePreservesIdentityAndFailedSave() throws {
+        let store = try makeStore()
+        let original = Prompt(body: "原文\n\n  缩进 🌟", pinned: true, uses: 8)
+        try store.save(original)
+        var draft = PromptDraft(original: original, body: original.body, pinned: true)
+        XCTAssertTrue(!draft.dirty)
+        draft.body += "\n修改"; draft.pinned = false
+        XCTAssertTrue(draft.dirty)
+        XCTAssertEqual(store.prompts, [original])
+        let edited = draft.savedPrompt()
+        XCTAssertEqual(edited.id, original.id); XCTAssertEqual(edited.uses, 8)
+        try store.save(edited)
+        XCTAssertEqual(try makeStore().prompts, [edited])
+        draft.body = "  \n"
+        XCTAssertThrowsError(try store.save(draft.savedPrompt()))
+        XCTAssertTrue(draft.dirty); XCTAssertEqual(store.prompts, [edited])
+        XCTAssertTrue(!PromptDraft().dirty)
     }
     func testFailedWriteDoesNotChangeMemory() throws {
         let file = root.appendingPathComponent("file"); try Data().write(to: file)
@@ -111,6 +129,7 @@ func XCTAssertThrowsError<T>(_ expression: @autoclosure () throws -> T, file: St
             ("non-destructive import/export", suite.testImportIsNonDestructive),
             ("invalid and future archives", suite.testInvalidInputsAndUnsupportedArchive),
             ("legacy migration, config persistence and three sizes", suite.testMigrationAndConfiguration),
+            ("draft identity, deferred persistence and invalid save", suite.testDraftSavePreservesIdentityAndFailedSave),
             ("failed write is atomic", suite.testFailedWriteDoesNotChangeMemory)
         ]
         for (name, test) in cases { try suite.setUpWithError(); try test(); try suite.tearDownWithError(); print("PASS: \(name)") }

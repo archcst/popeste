@@ -78,3 +78,16 @@ final class Store {
         try encoder.encode(Archive(prompts: prompts)).write(to: url, options: .atomic)
     }
 }
+
+/// Drafts survive hiding the panel, and become persistent only after a successful save.
+struct PromptDraft {
+    var original: Prompt?
+    var body = ""
+    var pinned = false
+    var dirty: Bool { body != (original?.body ?? "") || pinned != (original?.pinned ?? false) }
+    func savedPrompt() -> Prompt {
+        var prompt = original ?? Prompt(body: "")
+        prompt.body = body; prompt.pinned = pinned; prompt.updated = Date()
+        return prompt
+    }
+}
