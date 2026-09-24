@@ -10,7 +10,7 @@
   <img src="assets/screenshots/en-dark.png" width="48%" alt="Popeste phrase picker in dark appearance">
 </p>
 
-*Native UI previews with sample phrases and an opaque background. On macOS 26, glass appearance varies with the desktop background and system settings.*
+*Native macOS 26 floating windows with sample phrases, using the app’s glass container and controls. Glass appearance varies with the background and system settings.*
 
 Popeste is a native macOS menu bar utility for the text you type over and over: replies, snippets, notes, and reusable phrases. Bring up the search bar, find an item, and press Return to insert it into your current app.
 
