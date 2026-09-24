@@ -6,8 +6,8 @@
 <p align="center">English · <a href="README.zh-CN.md">简体中文</a></p>
 
 <p align="center">
-  <img src="assets/screenshots/en-light.png" width="48%" alt="Popeste phrase picker in light appearance">
-  <img src="assets/screenshots/en-dark.png" width="48%" alt="Popeste phrase picker in dark appearance">
+  <img src="assets/screenshots/en-light-window.png" width="48%" alt="Popeste phrase picker in light appearance">
+  <img src="assets/screenshots/en-dark-window.png" width="48%" alt="Popeste phrase picker in dark appearance">
 </p>
 
 *Native macOS 26 floating windows with sample phrases, using the app’s glass container and controls. Glass appearance varies with the background and system settings.*

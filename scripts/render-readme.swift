@@ -44,7 +44,7 @@ import AppKit
    let rect = canvas.frame
    let capture = Process()
    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-   capture.arguments = ["-x", "-R\(Int(rect.minX)),\(Int(top-rect.maxY)),\(Int(rect.width)),\(Int(rect.height))", root.appendingPathComponent("\(language)-\(dark ? "dark" : "light").png").path]
+   capture.arguments = ["-x", "-R\(Int(rect.minX)),\(Int(top-rect.maxY)),\(Int(rect.width)),\(Int(rect.height))", root.appendingPathComponent("\(language)-\(dark ? "dark" : "light")-window.png").path]
    try capture.run()
    capture.waitUntilExit()
    guard capture.terminationStatus == 0 else { throw NSError(domain: "Screenshot", code: Int(capture.terminationStatus)) }

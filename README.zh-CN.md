@@ -6,8 +6,8 @@
 <p align="center"><a href="README.md">English</a> · 简体中文</p>
 
 <p align="center">
-  <img src="assets/screenshots/zh-Hans-light.png" width="48%" alt="Popeste 浅色短语列表">
-  <img src="assets/screenshots/zh-Hans-dark.png" width="48%" alt="Popeste 深色短语列表">
+  <img src="assets/screenshots/zh-Hans-light-window.png" width="48%" alt="Popeste 浅色短语列表">
+  <img src="assets/screenshots/zh-Hans-dark-window.png" width="48%" alt="Popeste 深色短语列表">
 </p>
 
 *以上为 macOS 26 原生浮窗截图，使用应用的玻璃容器、控件和示例短语；玻璃效果随背景和系统设置变化。*
