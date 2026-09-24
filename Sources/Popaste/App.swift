@@ -23,7 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let item = NSMenuItem(title: title, action: selector, keyEquivalent: key); item.representedObject = title; editMenu.addItem(item)
         }
         editItem.submenu = editMenu; mainMenu.addItem(editItem); NSApp.mainMenu = mainMenu
-        status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength); status.button?.image = NSImage(systemSymbolName: "text.quote", accessibilityDescription: "Popaste")
+        status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength); status.button?.image = BrandIcon.menuBarImage()
         let menu = NSMenu()
         for (name, action) in [("呼出短语", #selector(toggle)), ("新建短语", #selector(newPrompt)), ("管理短语…", #selector(manage)), ("设置…", #selector(preferences)), ("退出 Popaste", #selector(quit))] { let item = NSMenuItem(title: name, action: action, keyEquivalent: ""); item.representedObject = name; item.target = self; menu.addItem(item) }; status.menu = menu
         localizeMenus()

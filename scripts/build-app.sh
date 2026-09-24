@@ -4,6 +4,9 @@ cd "${0:A:h:h}"
 swift build -c release
 app="$PWD/dist/Popaste.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+swiftc Sources/Popaste/BrandIcon.swift scripts/generate-icons.swift -o .build/generate-icons
+.build/generate-icons .build/AppIcon.iconset
+iconutil -c icns .build/AppIcon.iconset -o "$app/Contents/Resources/AppIcon.icns"
 cp .build/release/Popaste "$app/Contents/MacOS/Popaste"
 rm -rf "$app/Contents/Resources/Popaste_Popaste.bundle"
 cat > "$app/Contents/Info.plist" <<'PLIST'
@@ -13,6 +16,7 @@ cat > "$app/Contents/Info.plist" <<'PLIST'
 <key>CFBundleIdentifier</key><string>app.popaste.mac</string>
 <key>CFBundleName</key><string>Popaste</string>
 <key>CFBundleExecutable</key><string>Popaste</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleShortVersionString</key><string>1.0.0</string>
 <key>CFBundleVersion</key><string>1</string>
