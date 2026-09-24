@@ -25,9 +25,20 @@ No account, cloud service, or network connection required.
 - **Local storage.** Phrases and preferences live in `~/.config/popeste`, with atomic writes and protection against overwriting invalid data.
 - **Eight interface languages.** English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, and Spanish. Follows the system language by default.
 
-## Build and run
+## Install with Homebrew
 
-Currently available as source. A signed and notarized release installer has not been published.
+The first release is an **unnotarized test build** for Apple Silicon Macs running macOS 14+. macOS 14–15 device testing is still pending.
+
+```sh
+brew tap archcst/tap
+brew install --cask popeste
+```
+
+This build is ad-hoc signed, not Developer ID signed or notarized by Apple. Homebrew installs it but does not bypass Gatekeeper. If macOS blocks the first launch, review the download source and use **System Settings → Privacy & Security → Open Anyway** if offered. You do not need to disable Gatekeeper globally.
+
+You can also download the ZIP from [GitHub Releases](https://github.com/archcst/popeste/releases). To update, run `brew upgrade --cask popeste`; to uninstall, run `brew uninstall --cask popeste`. Your files in `~/.config/popeste` are retained.
+
+## Build from source
 
 Requirements:
 
@@ -42,7 +53,7 @@ cd popeste
 open dist/Popaste.app
 ```
 
-The build creates an app for your Mac's architecture and applies an ad-hoc signature. The executable and bundle are currently named `Popaste`. Public binary distribution still needs Developer ID signing and notarization.
+The build creates an app for your Mac's architecture and applies an ad-hoc signature. The executable and bundle are currently named `Popaste`. The test release uses this ad-hoc signature; a fully trusted distribution needs Developer ID signing and notarization.
 
 ## Quick start
 

@@ -14,7 +14,20 @@
 
 macOS 菜单栏短语工具，支持 macOS 14+。每条短语保存完整正文，列表用正文开头辨认内容，长内容单行裁切。无需账号、网络或第三方依赖。
 
-## 构建与运行
+## Homebrew 安装
+
+首个版本为 **未公证测试版**，支持 Apple Silicon、macOS 14+；macOS 14、15 的实机兼容性仍待验证。
+
+```sh
+brew tap archcst/tap
+brew install --cask popeste
+```
+
+安装包采用临时签名，没有 Developer ID 签名和 Apple 公证。Homebrew 负责安装，但不会绕过 Gatekeeper。如果首次打开被拦截，请确认下载来源，再通过「系统设置 → 隐私与安全 → 仍要打开」（若系统提供）允许运行，无需全局关闭安全检查。
+
+也可以从 [GitHub Releases](https://github.com/archcst/popeste/releases) 下载 ZIP。更新使用 `brew upgrade --cask popeste`，卸载使用 `brew uninstall --cask popeste`；卸载保留 `~/.config/popeste` 中的数据。
+
+## 源码构建与运行
 
 ```sh
 scripts/build-app.sh
@@ -23,7 +36,7 @@ open dist/Popaste.app
 
 界面完全使用 Swift + AppKit 实现：搜索、列表、设置和确认框为原生控件，正文编辑与预览使用 NSTextView / TextKit。菜单栏、全局快捷键、系统权限及插入同样由 Swift 实现。HTML 设计稿保留为视觉参考，不参与应用构建或运行。
 
-使用包含 macOS 26 或更新 SDK 的 Swift / Command Line Tools 构建本机架构的应用，运行最低要求为 macOS 14。开发构建使用 ad-hoc 签名；公开分发需 Developer ID 签名与公证。
+使用包含 macOS 26 或更新 SDK 的 Swift / Command Line Tools 构建本机架构的应用，运行最低要求为 macOS 14。开发构建使用 ad-hoc 签名；测试版使用临时签名；完整的受信任分发仍需 Developer ID 签名与公证。
 
 ```sh
 scripts/test.sh
@@ -73,6 +86,6 @@ macOS 14、15 使用普通实色界面，并隐藏“玻璃样式”选项。mac
 
 获取光标的精度取决于目标应用提供的辅助功能信息；部分输入框可能只提供整个区域的位置。
 
-目前提供源码构建，尚未发布正式签名、公证的安装包。当前构建生成本机架构；macOS 14、15 的实机兼容性仍待验证。
+目前提供源码构建和未公证测试安装包。当前构建生成本机架构；macOS 14、15 的实机兼容性仍待验证。
 
 实际验收范围见 [VALIDATION.md](VALIDATION.md)。设计稿位于 [design/popaste-compact-preview.html](design/popaste-compact-preview.html)。
