@@ -220,9 +220,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func render() {
         let glass = state["glass"] as? Bool == true
         // Regular supplies contrast through its adaptive material. Clear keeps its backing.
-        let dark = state["dark"] as? Bool == true
         let clearGlass = state["glassStyle"] as? String != "regular"
-        let backingOpacity: CGFloat = clearGlass ? (dark ? 0.62 : 0.72) : 0
+        let backingOpacity: CGFloat = clearGlass ? 0.55 : 0
         view.fill = glass ? Style.canvas.withAlphaComponent(backingOpacity) : Style.canvas
         rows.fill = glass ? .clear : Style.canvas
         let responder = view.window?.firstResponder

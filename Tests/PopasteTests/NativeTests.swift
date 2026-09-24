@@ -97,7 +97,7 @@ import AppKit
                 ui.state["dark"] = dark
                 ui.state["glassStyle"] = "clear"
                 let clearOpacity = ui.view.fill.alphaComponent
-                assert(clearOpacity >= 0.6 && clearOpacity < 1)
+                assert(abs(clearOpacity - 0.55) < 0.001)
                 ui.state["glassStyle"] = "regular"
                 assert(ui.view.fill.alphaComponent == 0)
                 assert(ui.view.appearance == nil)
