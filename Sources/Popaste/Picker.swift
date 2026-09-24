@@ -26,6 +26,7 @@ final class Picker: NSObject, NSWindowDelegate {
     private var modal = false
     private var recording = false
     private var collapsed = true
+    private var expandsUpward = false
     private var currentPage = "list"
     init(store: Store, configuration: Configuration, settings: Settings) {
         self.store = store; self.configuration = configuration; self.settings = settings
@@ -101,9 +102,9 @@ final class Picker: NSObject, NSWindowDelegate {
         let point = caret.map { NSPoint(x: $0.minX, y: $0.minY) } ?? mouse
         let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main!
         let scale = configuration.value.pickerSize.scale
-        // Reserve room for expansion so the search field stays anchored near screen edges.
-        var frame = PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: 424*scale))
-        if collapsed { frame.origin.y = frame.maxY - 57*scale; frame.size.height = 57*scale }
+        // Position the visible search bar itself; expansion handles screen edges later.
+        let frame = PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: (collapsed ? 57 : 424)*scale))
+        expandsUpward = frame.minY >= (caret?.maxY ?? mouse.y)
         panel.setFrame(frame, display: false)
         reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); interface.focus()
         if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
@@ -117,11 +118,9 @@ final class Picker: NSObject, NSWindowDelegate {
         guard panel.isVisible else { return }
         let scale = configuration.value.pickerSize.scale
         let screen = panel.screen ?? NSScreen.main!
-        let area = screen.visibleFrame.insetBy(dx: 8, dy: 8)
-        let width = min(480*scale, area.width), height = min((collapsed ? 57 : 424)*scale, area.height, max(57*scale, panel.frame.maxY-area.minY))
-        let x = min(max(panel.frame.minX, area.minX), area.maxX-width)
-        let y = min(max(panel.frame.maxY-height, area.minY), area.maxY-height)
-        panel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
+        let frame = PickerPlacement.resizedFrame(panel.frame, visibleScreen: screen.visibleFrame,
+            desiredSize: NSSize(width: 480*scale, height: (collapsed ? 57 : 424)*scale), anchorBottom: expandsUpward)
+        panel.setFrame(frame, display: true)
     }
     func dismiss(restore: Bool) {
         panel.orderOut(nil); monitors.forEach(NSEvent.removeMonitor); monitors.removeAll()

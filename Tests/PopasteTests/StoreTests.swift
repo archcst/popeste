@@ -21,6 +21,26 @@ final class StoreTests {
             }
         }
         let screen = screens[0]
+        // A collapsed picker near the lower half must not reserve a full list above it.
+        let compact = PickerPlacement.frame(caret: nil, mouse: CGPoint(x: 300, y: 300), visibleScreen: screen, desiredSize: CGSize(width: 480, height: 57))
+        XCTAssertEqual(compact.minY, 308)
+        XCTAssertEqual(compact.height, 57)
+        let expanded = PickerPlacement.resizedFrame(compact, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 424))
+        XCTAssertEqual(expanded.height, 424)
+        XCTAssertTrue(screen.insetBy(dx: 8, dy: 8).contains(expanded))
+        let highCompact = PickerPlacement.frame(caret: CGRect(x: 100, y: 700, width: 0, height: 18), mouse: .zero, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 57))
+        let highExpanded = PickerPlacement.resizedFrame(highCompact, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 424))
+        XCTAssertEqual(highExpanded.maxY, highCompact.maxY)
+        let aboveCaret = CGRect(x: 200, y: 500, width: 0, height: 18)
+        let aboveCompact = PickerPlacement.frame(caret: aboveCaret, mouse: .zero, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 57))
+        XCTAssertEqual(aboveCompact.minY, aboveCaret.maxY + 8)
+        let aboveExpanded = PickerPlacement.resizedFrame(aboveCompact, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 250), anchorBottom: true)
+        XCTAssertEqual(aboveExpanded.minY, aboveCompact.minY)
+        let aboveCollapsed = PickerPlacement.resizedFrame(aboveExpanded, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 57), anchorBottom: true)
+        XCTAssertEqual(aboveCollapsed, aboveCompact)
+        let topCaret = CGRect(x: 200, y: 865, width: 0, height: 18)
+        let belowCompact = PickerPlacement.frame(caret: topCaret, mouse: .zero, visibleScreen: screen, desiredSize: CGSize(width: 480, height: 57))
+        XCTAssertEqual(belowCompact.maxY, topCaret.minY - 8)
         let lowCaret = CGRect(x: 100, y: 50, width: 0, height: 18)
         XCTAssertTrue(PickerPlacement.frame(caret: lowCaret, mouse: .zero, visibleScreen: screen).minY > lowCaret.maxY)
         let highCaret = CGRect(x: 100, y: 850, width: 0, height: 18)

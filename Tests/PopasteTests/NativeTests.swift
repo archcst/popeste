@@ -5,6 +5,12 @@ import AppKit
         NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:flags,timestamp:0,windowNumber:0,context:nil,characters:chars,charactersIgnoringModifiers:chars,isARepeat:false,keyCode:code)!
     }
     static func main() {
+        let editorBounds = CGRect(x: 200, y: 400, width: 600, height: 100)
+        let emptyCaret = Insertion.normalizedInsertionBounds(editorBounds, range: CFRange(location: 0, length: 0), empty: true)
+        assert(emptyCaret == CGRect(x: 200, y: 400, width: 0, height: 22))
+        assert(Insertion.normalizedInsertionBounds(editorBounds, range: CFRange(location: 0, length: 20), empty: false) == editorBounds)
+        let exactCaret = CGRect(x: 220, y: 410, width: 0, height: 27)
+        assert(Insertion.normalizedInsertionBounds(exactCaret, range: CFRange(location: 0, length: 0), empty: true) == exactCaret)
         _ = NSApplication.shared
         let e = NativeEditor(frame:NSRect(x:0,y:0,width:130,height:300))
         let ew = NSWindow(contentRect:NSRect(x:0,y:0,width:130,height:300),styleMask:.borderless,backing:.buffered,defer:false)
