@@ -218,11 +218,12 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func separator(_ y: CGFloat) { let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line); add(line,CGRect(x:0,y:y,width:480,height:1)) }
     private func render() {
         let glass = state["glass"] as? Bool == true
-        // Custom text follows appearance, so clear glass needs a contrast backing
-        // even when the application behind the panel has the opposite appearance.
+        // Both materials need a stable backing for our appearance-based text colors.
+        // Regular is denser; clear keeps a little more of the backdrop visible.
         let dark = state["dark"] as? Bool == true
         let clearGlass = state["glassStyle"] as? String != "regular"
-        view.fill = glass ? (clearGlass ? Style.canvas.withAlphaComponent(dark ? 0.62 : 0.72) : .clear) : Style.canvas
+        let backingOpacity: CGFloat = clearGlass ? (dark ? 0.62 : 0.72) : 0.94
+        view.fill = glass ? Style.canvas.withAlphaComponent(backingOpacity) : Style.canvas
         rows.fill = glass ? .clear : Style.canvas
         let responder = view.window?.firstResponder
         let searchFocused = responder === search || (search.currentEditor() != nil && responder === search.currentEditor())
@@ -341,7 +342,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         label("Popaste",CGRect(x:370,y:14,width:93,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
         for (i,title) in titles.enumerated() {
             let y = CGFloat(57+i*35)
-            label(tr(title),CGRect(x:18,y:y+5,width:170,height:28)).textColor = InterfacePalette.ink
+            let labelY = title == "浮窗大小" ? y+(35-28)/2 : y+5
+            label(tr(title),CGRect(x:18,y:labelY,width:170,height:28)).textColor = InterfacePalette.ink
             if i < titles.count - 1 {
                 let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
                 add(line,CGRect(x:18,y:y+34,width:444,height:1))
@@ -360,17 +362,22 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         select("navigationSchemes",options:keyOptions,y:92,multiple:true)
         toggle("vimEditing",y:127,value:state["vimEditing"] as? Bool ?? false)
         let segmentTitles = ["小","中","大"].map(tr)
-        let widths = segmentTitles.map { textWidth($0,size:11)+22 }
-        let total = widths.reduce(0,+)+10
-        let tray = NSView(); tray.wantsLayer = true; tray.layer?.backgroundColor = resolvedColor(InterfacePalette.hover); tray.layer?.cornerRadius = 7*s
-        add(tray,CGRect(x:462-total,y:166.43,width:total,height:29.54))
-        var x = 465-total
-        for (i,value) in ["small","medium","large"].enumerated() {
-            let b = button(segmentTitles[i],CGRect(x:x,y:169.42,width:widths[i],height:23.54)) { [weak self] in self?.emit("size",["value":value]) }
-            b.font = .systemFont(ofSize:11*s); b.selected = state["size"] as? String == value
-            b.selectedFill = InterfacePalette.paper; b.cornerSize = 5*s; b.inkColor = b.selected ? InterfacePalette.ink : InterfacePalette.muted
-            x += widths[i]+2
+        let sizeValues = ["small","medium","large"]
+        let selectedSize = sizeValues.firstIndex(of:state["size"] as? String ?? "large") ?? 2
+        let width = max(114,segmentTitles.map { textWidth($0,size:11)+26 }.max()! * 3)
+        let sizeControl: NSView
+        if #available(macOS 26.0, *), glassAvailable {
+            sizeControl = GlassSizeSelector(labels:segmentTitles,selected:selectedSize,scale:s) { [weak self] index in
+                self?.emit("size",["value":sizeValues[index]])
+            }
+        } else {
+            let control = NSSegmentedControl(labels:segmentTitles,trackingMode:.selectOne,target:self,action:#selector(changePickerSize(_:)))
+            control.segmentStyle = .automatic; control.controlSize = .small
+            control.font = .systemFont(ofSize:11*s); control.segmentDistribution = .fillEqually
+            control.selectedSegment = selectedSize; control.setAccessibilityLabel(tr("浮窗大小"))
+            sizeControl = control
         }
+        add(sizeControl,CGRect(x:462-width,y:rowY("浮窗大小")+(35-30)/2,width:width,height:30))
         select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:197)
         if glassAvailable {
             select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:rowY("玻璃样式"))
@@ -392,6 +399,11 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let doneWidth = textWidth(tr("完成"),size:12)+18
         let done = button(tr("完成"),CGRect(x:468-doneWidth,y:387,width:doneWidth,height:29),muted:true) { [weak self] in self?.show("list") }
         done.font = .systemFont(ofSize:12*s); done.inkColor = InterfacePalette.muted
+    }
+    @objc private func changePickerSize(_ sender: NSSegmentedControl) {
+        let sizes = ["small","medium","large"]
+        guard sizes.indices.contains(sender.selectedSegment) else { return }
+        emit("size",["value":sizes[sender.selectedSegment]])
     }
     private func resolvedColor(_ color: NSColor) -> CGColor {
         var result = color.cgColor

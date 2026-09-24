@@ -212,3 +212,73 @@ final class SettingsMenuShield: NSView {
     override var isFlipped: Bool { true }
     override func mouseDown(with event: NSEvent) { dismiss?() }
 }
+
+/// A glass selection capsule; the surrounding track stays quiet and transparent.
+@available(macOS 26.0, *)
+final class GlassSizeSelector: NSView {
+    private let thumb = NSGlassEffectView()
+    private var buttons: [NativeButton] = []
+    private var moving = false
+    private(set) var selectedIndex: Int
+    private let scale: CGFloat
+    private let onSelect: (Int) -> Void
+    override var isFlipped: Bool { true }
+
+    init(labels: [String], selected: Int, scale: CGFloat, onSelect: @escaping (Int) -> Void) {
+        self.selectedIndex = selected; self.scale = scale; self.onSelect = onSelect
+        super.init(frame:.zero)
+        wantsLayer = true
+        thumb.style = .regular
+        thumb.contentView = NSView()
+        if #available(macOS 27.0, *) { thumb.effectIsInteractive = true }
+        addSubview(thumb)
+        for (index, title) in labels.enumerated() {
+            let button = NativeButton(title) { [weak self] in self?.select(index) }
+            button.font = .systemFont(ofSize:11*scale)
+            button.setAccessibilityRole(.radioButton)
+            buttons.append(button); addSubview(button)
+        }
+        setAccessibilityLabel(tr("浮窗大小"))
+        refreshSelection()
+    }
+    required init?(coder: NSCoder) { fatalError() }
+    private func capsuleFrame(_ index: Int) -> NSRect {
+        let inset = 2*scale
+        let width = (bounds.width-2*inset)/CGFloat(buttons.count)
+        return NSRect(x:inset+CGFloat(index)*width,y:inset,width:width,height:bounds.height-2*inset)
+    }
+    override func layout() {
+        super.layout()
+        for (index, button) in buttons.enumerated() { button.frame = capsuleFrame(index) }
+        thumb.cornerRadius = (bounds.height-4*scale)/2
+        if !moving { thumb.frame = capsuleFrame(selectedIndex) }
+    }
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.labelColor.withAlphaComponent(0.07).setFill()
+        NSBezierPath(roundedRect:bounds,xRadius:bounds.height/2,yRadius:bounds.height/2).fill()
+    }
+    private func refreshSelection() {
+        for (index, button) in buttons.enumerated() {
+            button.inkColor = index == selectedIndex ? .labelColor : .secondaryLabelColor
+            button.setAccessibilityValue(index == selectedIndex ? 1 : 0)
+            button.needsDisplay = true
+        }
+    }
+    func select(_ index: Int) {
+        guard buttons.indices.contains(index), index != selectedIndex, !moving else { return }
+        selectedIndex = index; refreshSelection()
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            thumb.frame = capsuleFrame(index); onSelect(index); return
+        }
+        moving = true
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.18
+            context.timingFunction = CAMediaTimingFunction(name:.easeInEaseOut)
+            thumb.animator().frame = capsuleFrame(index)
+        } completionHandler: { [weak self] in
+            guard let self else { return }
+            self.moving = false
+            self.onSelect(index)
+        }
+    }
+}

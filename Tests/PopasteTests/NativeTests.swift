@@ -62,6 +62,17 @@ import AppKit
         testSearchEditor.unmarkText()
         ui.open("settings")
         assert(ui.view.subviews.contains { ($0 as? NativeButton)?.title == tr("完成") })
+        var sizeSelection = ""
+        ui.action = { name,payload in
+            if name == "size" { sizeSelection = payload["value"] as? String ?? ""; ui.state["size"] = sizeSelection }
+        }
+        for (index, size) in ["small","medium","large"].enumerated() {
+            let control = ui.view.subviews.compactMap { $0 as? NSSegmentedControl }.first!
+            control.selectedSegment = index
+            _ = control.sendAction(control.action!,to:control.target)
+            assert(sizeSelection == size)
+            assert(ui.view.subviews.compactMap { $0 as? NSSegmentedControl }.first!.selectedSegment == index)
+        }
         var toggleValue = false
         let toggle = SettingsToggle("fixture",enabled:false) { toggleValue = $0 }
         toggle.performClick(nil); assert(toggleValue && toggle.state == .on)
@@ -82,6 +93,15 @@ import AppKit
             let glassButton = ui.view.subviews.compactMap { $0 as? NativeButton }.first { $0.title == tr("液态玻璃") }
             assert(glassButton != nil)
             let glassPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
+            for dark in [false, true] {
+                ui.state["dark"] = dark
+                ui.state["glassStyle"] = "clear"
+                let clearOpacity = ui.view.fill.alphaComponent
+                assert(clearOpacity >= 0.6 && clearOpacity < 1)
+                ui.state["glassStyle"] = "regular"
+                assert(ui.view.fill.alphaComponent > clearOpacity && ui.view.fill.alphaComponent < 1)
+            }
+            ui.state["glassStyle"] = "clear"
             ui.state["glass"] = false
             assert(!ui.view.subviews.contains { ($0 as? NativeButton)?.title == tr("液态玻璃") })
             assert(!ui.view.subviews.contains { ($0 as? NSTextField)?.stringValue == tr("玻璃样式") })
@@ -89,6 +109,18 @@ import AppKit
             assert(abs(glassPath - solidPath - 35 * scale) < 0.01)
             assert(ui.view.fill.alphaComponent == 1)
             assert(ui.state["glassStyle"] as? String == "clear")
+        }
+        if #available(macOS 26.0, *) {
+            var pickedSize = -1
+            let selector = GlassSizeSelector(labels:["S","M","L"],selected:0,scale:1) { pickedSize = $0 }
+            selector.frame = NSRect(x:0,y:0,width:114,height:30)
+            w.contentView?.addSubview(selector)
+            selector.layoutSubtreeIfNeeded()
+            assert(selector.subviews.contains { $0 is NSGlassEffectView })
+            selector.select(2)
+            RunLoop.current.run(until:Date().addingTimeInterval(0.35))
+            assert(selector.selectedIndex == 2 && pickedSize == 2)
+            selector.removeFromSuperview()
         }
         // Exercise the real fallback wrapper without changing system preferences.
         let priorGlassOverride = ProcessInfo.processInfo.environment["POPASTE_GLASS"]
