@@ -85,11 +85,23 @@ import AppKit
         _ = ui.handleKey(key("",code:125)); _ = ui.handleKey(key("",code:125)); _ = ui.handleKey(key("\r",code:36))
         assert(languageSelection == "zh-Hans")
         assert(!ui.view.subviews.contains { $0 is SettingsMenuShield })
+        func assertSettingsAlignment(_ scale: CGFloat) {
+            for child in ui.view.subviews {
+                var isControl = child is NSControl
+                if #available(macOS 26.0, *), child is GlassSizeSelector { isControl = true }
+                guard isControl else { continue }
+                let center = child.frame.midY / scale
+                guard center >= 57, center < 372 else { continue }
+                let row = floor((center-57)/35)
+                assert(abs(center-(57+row*35+17.5)) < 0.01)
+            }
+        }
         // The same settings state works with and without the native glass surface.
         for scale in [0.8, 0.9, 1.0] {
             ui.state["scale"] = scale
             ui.state["glassStyle"] = "clear"
             ui.state["glass"] = true
+            assertSettingsAlignment(scale)
             let glassButton = ui.view.subviews.compactMap { $0 as? NativeButton }.first { $0.title == tr("液态玻璃") }
             assert(glassButton != nil)
             let glassPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
@@ -104,6 +116,7 @@ import AppKit
             }
             ui.state["glassStyle"] = "clear"
             ui.state["glass"] = false
+            assertSettingsAlignment(scale)
             assert(!ui.view.subviews.contains { ($0 as? NativeButton)?.title == tr("液态玻璃") })
             assert(!ui.view.subviews.contains { ($0 as? NSTextField)?.stringValue == tr("玻璃样式") })
             let solidPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
@@ -127,6 +140,24 @@ import AppKit
             assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "L" } == true)
             selector.removeFromSuperview()
         }
+        let savedLanguage = AppText.language
+        for language in Preferences.supportedLanguages {
+            AppText.language = { language }
+            for scale in [0.8, 0.9, 1.0] {
+                for schemes in [["arrows"], ["emacs"], ["vim"], ["arrows","emacs","vim"], []] {
+                    let searchUI = NativeInterface(mode:"list")
+                    searchUI.view.frame = NSRect(x:0,y:0,width:480*scale,height:57*scale)
+                    searchUI.state = ["scale":scale,"navigationSchemes":schemes,"prompts":[]]
+                    searchUI.view.layoutSubtreeIfNeeded()
+                    let hint = searchUI.view.subviews.compactMap { $0 as? NativeLabel }.first!
+                    let input = searchUI.view.subviews.compactMap { $0 as? NativeSearch }.first!
+                    assert(hint.frame.width >= hint.intrinsicContentSize.width)
+                    assert(hint.frame.minX > input.frame.maxX)
+                    assert(hint.frame.maxX <= searchUI.view.bounds.width)
+                }
+            }
+        }
+        AppText.language = savedLanguage
         // Exercise the real fallback wrapper without changing system preferences.
         let priorGlassOverride = ProcessInfo.processInfo.environment["POPASTE_GLASS"]
         setenv("POPASTE_GLASS", "0", 1)

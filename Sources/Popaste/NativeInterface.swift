@@ -234,9 +234,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             search.font = .systemFont(ofSize:17*s); search.textColor = InterfacePalette.ink
             search.placeholderAttributedString = NSAttributedString(string:tr("搜索短语"),attributes:[.font:NSFont.systemFont(ofSize:17*s),.foregroundColor:InterfacePalette.muted])
             let expandText = (navLabel("down").isEmpty ? "↵" : navLabel("down"))+" "+tr("展开")
-            let hintWidth = textWidth(expandText,size:12)
+            let hint = NativeLabel(labelWithString:expandText)
+            hint.font = .systemFont(ofSize:12*s); hint.textColor = InterfacePalette.muted
+            hint.alignment = .right; hint.maximumNumberOfLines = 1
+            // Measure the native field at its actual font size, including cell insets.
+            let hintWidth = ceil(hint.intrinsicContentSize.width+2)/s
             add(search,CGRect(x:43,y:13.72,width:expanded ? 422 : 411-hintWidth,height:29))
-            if !expanded { label(expandText,CGRect(x:463-hintWidth,y:13.72,width:hintWidth,height:29),size:12,muted:true,align:.right) }
+            if !expanded { add(hint,CGRect(x:463-hintWidth,y:13.72,width:hintWidth,height:29)) }
             else {
                 separator(56); scroll.documentView = rows; add(scroll,CGRect(x:7,y:64,width:466,height:314))
                 separator(379)
@@ -332,6 +336,10 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         for child in view.subviews {
             if let field = child as? NativeLabel { field.font = .systemFont(ofSize:14*s,weight:.medium); field.textColor = InterfacePalette.ink }
             if let back = child as? NativeButton { back.inkColor = InterfacePalette.muted }
+            if child is NativeLabel || child is NativeButton,
+               let index = parts.firstIndex(where:{ $0.0 === child }) {
+                parts[index].1.origin.y = 28-parts[index].1.height/2
+            }
         }
         let glassAvailable = state["glass"] as? Bool == true
         let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","外观"]
@@ -341,7 +349,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         label("Popaste",CGRect(x:370,y:14,width:93,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
         for (i,title) in titles.enumerated() {
             let y = CGFloat(57+i*35)
-            let labelY = title == "浮窗大小" ? y+(35-28)/2 : y+5
+            let labelY = settingsControlY(row:y,height:28)
             label(tr(title),CGRect(x:18,y:labelY,width:170,height:28)).textColor = InterfacePalette.ink
             if i < titles.count - 1 {
                 let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
@@ -354,7 +362,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let keyWidth = min(180,controlWidth(keyTitle.isEmpty ? "—" : keyTitle))
         let shortcutTitle = recording ? tr("按下组合键…") : state["shortcut"] as? String ?? ""
         let shortcutWidth = max(56,textWidth(shortcutTitle,size:12)+22)
-        let recorder = button(shortcutTitle,CGRect(x:462-keyWidth-12-shortcutWidth,y:98,width:shortcutWidth,height:27)) { [weak self] in
+        let recorder = button(shortcutTitle,CGRect(x:462-keyWidth-12-shortcutWidth,y:settingsControlY(row:rowY("快捷键方案"),height:27),width:shortcutWidth,height:27)) { [weak self] in
             self?.recording = true; self?.emit("recording",["enabled":true]); self?.render(); self?.view.window?.makeFirstResponder(self?.view)
         }
         recorder.font = .systemFont(ofSize:12*s); recorder.outline = InterfacePalette.line; recorder.cornerSize = 7*s; recorder.inkColor = InterfacePalette.ink
@@ -376,7 +384,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             control.selectedSegment = selectedSize; control.setAccessibilityLabel(tr("浮窗大小"))
             sizeControl = control
         }
-        add(sizeControl,CGRect(x:462-width,y:rowY("浮窗大小")+(35-30)/2,width:width,height:30))
+        add(sizeControl,CGRect(x:462-width,y:settingsControlY(row:rowY("浮窗大小"),height:30),width:width,height:30))
         select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:197)
         if glassAvailable {
             select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:rowY("玻璃样式"))
@@ -385,13 +393,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let permitted = state["trusted"] as? Bool == true
         let permissionTitle = tr(permitted ? "已授权 ›" : "去授权 ›")
         let permissionWidth = textWidth(permissionTitle,size:11)+24
-        let permission = button(permissionTitle,CGRect(x:462-permissionWidth,y:rowY("辅助功能权限")+5,width:permissionWidth,height:28)) { [weak self] in self?.emit("permission") }
+        let permission = button(permissionTitle,CGRect(x:462-permissionWidth,y:settingsControlY(row:rowY("辅助功能权限"),height:28),width:permissionWidth,height:28)) { [weak self] in self?.emit("permission") }
         permission.font = .systemFont(ofSize:11*s); permission.statusDot = true
         permission.inkColor = permitted ? NSColor(srgbRed:112/255,green:149/255,blue:128/255,alpha:1) : InterfacePalette.muted
         let pathX = 18+textWidth(tr("配置文件"),size:13)+12
-        label("~/.config/popeste",CGRect(x:pathX,y:rowY("配置文件")+5,width:210,height:28),size:11,muted:true).textColor = InterfacePalette.muted
+        label("~/.config/popeste",CGRect(x:pathX,y:settingsControlY(row:rowY("配置文件"),height:28),width:210,height:28),size:11,muted:true).textColor = InterfacePalette.muted
         let openWidth = textWidth(tr("打开"),size:12)+18
-        let open = button(tr("打开"),CGRect(x:462-openWidth,y:rowY("配置文件")+5,width:openWidth,height:28),muted:true) { [weak self] in self?.emit("openDirectory") }
+        let open = button(tr("打开"),CGRect(x:462-openWidth,y:settingsControlY(row:rowY("配置文件"),height:28),width:openWidth,height:28),muted:true) { [weak self] in self?.emit("openDirectory") }
         open.font = .systemFont(ofSize:12*s); open.inkColor = InterfacePalette.muted
         separator(379)
         label(tr("更改后自动保存"),CGRect(x:12,y:387,width:330,height:29),size:10,muted:true).textColor = InterfacePalette.muted
@@ -411,15 +419,16 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func textWidth(_ text: String,size: CGFloat) -> CGFloat { (text as NSString).size(withAttributes:[.font:NSFont.systemFont(ofSize:size)]).width }
     private func controlWidth(_ title: String) -> CGFloat { textWidth(title,size:12)+37 }
+    private func settingsControlY(row:CGFloat,height:CGFloat) -> CGFloat { row+(35-height)/2 }
     private func toggle(_ name: String,y: CGFloat,value: Bool) {
         let toggle = SettingsToggle(tr(name == "login" ? "登录时启动" : "Vim 编辑模式"),enabled:value) { [weak self] enabled in self?.emit(name,["enabled":enabled]) }
-        add(toggle,CGRect(x:432,y:y+10,width:30,height:18))
+        add(toggle,CGRect(x:432,y:settingsControlY(row:y,height:18),width:30,height:18))
     }
     private func select(_ name: String,options:[(String,String)],y:CGFloat,multiple:Bool = false) {
         let values = multiple ? schemes : [state[name] as? String ?? "system"]
         let title = options.filter { values.contains($0.0) }.map { tr($0.1) }.joined(separator:" / ")
         let width = multiple ? min(180,controlWidth(title.isEmpty ? "—" : title)) : controlWidth(title)
-        let b = button(title.isEmpty ? "—" : title,CGRect(x:462-width,y:y+5,width:width,height:28)) {}
+        let b = button(title.isEmpty ? "—" : title,CGRect(x:462-width,y:settingsControlY(row:y,height:28),width:width,height:28)) {}
         b.font = .systemFont(ofSize:12*s); b.inkColor = InterfacePalette.ink
         b.alignRight = true; b.trailingSymbol = "chevron.down"; b.symbolGap = 9
         b.invoke = { [weak self] in

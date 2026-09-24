@@ -153,7 +153,7 @@ final class NativeRow: NSView {
     override func mouseDown(with event: NSEvent) { choose?(); if event.clickCount == 2 { insert?() } }
     override func accessibilityPerformPress() -> Bool { choose?(); return true }
     override func draw(_ dirtyRect: NSRect) {
-        let background = selected ? Style.selection.withAlphaComponent(glass ? 0.65 : 1) : edit.isHidden ? (glass ? .clear : Style.canvas) : InterfacePalette.hover.withAlphaComponent(glass ? 0.55 : 1)
+        let background = selected ? InterfacePalette.rowSelection : edit.isHidden ? (glass ? .clear : Style.canvas) : InterfacePalette.hover.withAlphaComponent(glass ? 0.55 : 1)
         background.setFill(); NSBezierPath(roundedRect: bounds, xRadius: 10*scale, yRadius: 10*scale).fill()
         let text = NSAttributedString(string: body, attributes: [.font: NSFont.systemFont(ofSize: 17*scale), .foregroundColor: InterfacePalette.ink])
         NSGraphicsContext.saveGraphicsState(); let area = bounds.insetBy(dx: 12*scale, dy: 0); area.clip()
@@ -193,6 +193,7 @@ enum InterfacePalette {
     static let paper = color(0xffffff,0x242628)
     static let black = color(0x111111,0xf3f4f5)
     static let selected = color(0xeceef0,0x383c40)
+    static let rowSelection = color(0xe9ebed,0x494e54)
 }
 final class SettingsToggle: NSButton {
     var invoke: ((Bool) -> Void)?
