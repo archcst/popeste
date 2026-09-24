@@ -99,7 +99,8 @@ import AppKit
                 let clearOpacity = ui.view.fill.alphaComponent
                 assert(clearOpacity >= 0.6 && clearOpacity < 1)
                 ui.state["glassStyle"] = "regular"
-                assert(ui.view.fill.alphaComponent > clearOpacity && ui.view.fill.alphaComponent < 1)
+                assert(ui.view.fill.alphaComponent == 0)
+                assert(ui.view.appearance == nil)
             }
             ui.state["glassStyle"] = "clear"
             ui.state["glass"] = false
@@ -108,6 +109,7 @@ import AppKit
             let solidPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
             assert(abs(glassPath - solidPath - 35 * scale) < 0.01)
             assert(ui.view.fill.alphaComponent == 1)
+            assert(ui.view.appearance != nil)
             assert(ui.state["glassStyle"] as? String == "clear")
         }
         if #available(macOS 26.0, *) {
@@ -116,10 +118,13 @@ import AppKit
             selector.frame = NSRect(x:0,y:0,width:114,height:30)
             w.contentView?.addSubview(selector)
             selector.layoutSubtreeIfNeeded()
-            assert(selector.subviews.contains { $0 is NSGlassEffectView })
+            let glass = selector.subviews.compactMap { $0 as? NSGlassEffectView }.first!
+            assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "S" } == true)
+            assert(glass.contentView!.subviews.first!.frame == glass.contentView!.bounds)
             selector.select(2)
             RunLoop.current.run(until:Date().addingTimeInterval(0.35))
             assert(selector.selectedIndex == 2 && pickedSize == 2)
+            assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "L" } == true)
             selector.removeFromSuperview()
         }
         // Exercise the real fallback wrapper without changing system preferences.

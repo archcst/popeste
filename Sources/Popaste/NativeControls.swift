@@ -8,18 +8,24 @@ final class NativeCanvas: NSView {
     override var acceptsFirstResponder: Bool { true }
     override func layout() { super.layout(); layoutContent?() }
     override func draw(_ dirtyRect: NSRect) { fill.setFill(); bounds.fill() }
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        func redraw(_ view: NSView) { view.needsDisplay = true; view.subviews.forEach(redraw) }
+        redraw(self)
+    }
     override func keyDown(with event: NSEvent) { if keyHandler?(event) != true { super.keyDown(with: event) } }
 }
-/// Labels and buttons use the same attributed-text metrics in flipped coordinates.
+/// Let AppKit draw labels within the inherited glass appearance.
 final class NativeLabel: NSTextField {
-    override var isFlipped: Bool { true }
-    override func draw(_ dirtyRect: NSRect) {
-        let text = NSAttributedString(string:stringValue, attributes:[.font:font ?? NSFont.systemFont(ofSize:13), .foregroundColor:textColor ?? NSColor.labelColor])
-        let size = text.size()
-        let x: CGFloat = alignment == .right ? bounds.width-size.width : alignment == .center ? (bounds.width-size.width)/2 : 0
-        NSGraphicsContext.saveGraphicsState(); bounds.clip()
-        text.draw(at:NSPoint(x:x,y:(bounds.height-size.height)/2))
-        NSGraphicsContext.restoreGraphicsState()
+    override class var cellClass: AnyClass? { get { CenteredLabelCell.self } set {} }
+}
+final class CenteredLabelCell: NSTextFieldCell {
+    override func drawingRect(forBounds rect: NSRect) -> NSRect {
+        var result = super.drawingRect(forBounds:rect)
+        let height = min(result.height,cellSize(forBounds:rect).height)
+        result.origin.y += (result.height-height)/2
+        result.size.height = height
+        return result
     }
 }
 
@@ -180,8 +186,8 @@ enum InterfacePalette {
             return NSColor(srgbRed:CGFloat((value >> 16) & 255)/255,green:CGFloat((value >> 8) & 255)/255,blue:CGFloat(value & 255)/255,alpha:1)
         }
     }
-    static let ink = color(0x303235,0xe8eaec)
-    static let muted = color(0x95999e,0x989da3)
+    static let ink = NSColor.labelColor
+    static let muted = NSColor.secondaryLabelColor
     static let line = color(0xeceef0,0x36393c)
     static let hover = color(0xf5f6f7,0x2d3033)
     static let paper = color(0xffffff,0x242628)
@@ -229,7 +235,8 @@ final class GlassSizeSelector: NSView {
         super.init(frame:.zero)
         wantsLayer = true
         thumb.style = .regular
-        thumb.contentView = NSView()
+        let glassContent = NativeCanvas(); glassContent.fill = .clear
+        thumb.contentView = glassContent
         if #available(macOS 27.0, *) { thumb.effectIsInteractive = true }
         addSubview(thumb)
         for (index, title) in labels.enumerated() {
@@ -249,9 +256,12 @@ final class GlassSizeSelector: NSView {
     }
     override func layout() {
         super.layout()
-        for (index, button) in buttons.enumerated() { button.frame = capsuleFrame(index) }
         thumb.cornerRadius = (bounds.height-4*scale)/2
         if !moving { thumb.frame = capsuleFrame(selectedIndex) }
+        thumb.layoutSubtreeIfNeeded()
+        for (index, button) in buttons.enumerated() {
+            button.frame = index == selectedIndex ? thumb.contentView!.bounds : capsuleFrame(index)
+        }
     }
     override func draw(_ dirtyRect: NSRect) {
         NSColor.labelColor.withAlphaComponent(0.07).setFill()
@@ -259,6 +269,15 @@ final class GlassSizeSelector: NSView {
     }
     private func refreshSelection() {
         for (index, button) in buttons.enumerated() {
+            if index == selectedIndex {
+                thumb.contentView?.addSubview(button)
+                button.autoresizingMask = [.width,.height]
+                button.frame = thumb.contentView?.bounds ?? .zero
+            } else {
+                addSubview(button)
+                button.autoresizingMask = []
+                button.frame = capsuleFrame(index)
+            }
             button.inkColor = index == selectedIndex ? .labelColor : .secondaryLabelColor
             button.setAccessibilityValue(index == selectedIndex ? 1 : 0)
             button.needsDisplay = true

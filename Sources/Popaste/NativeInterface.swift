@@ -61,7 +61,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func emit(_ name: String, _ payload: [String: Any] = [:]) { action?(name,payload) }
     private func applyState() {
         let oldID = chosen?["id"] as? String
-        view.appearance = NSAppearance(named: (state["dark"] as? Bool == true) ? .darkAqua : .aqua)
+        // Glass supplies its adaptive appearance to content; only solid views set their own.
+        view.appearance = state["glass"] as? Bool == true ? nil : NSAppearance(named:(state["dark"] as? Bool == true) ? .darkAqua : .aqua)
         if let oldID, let i = matches.firstIndex(where: { $0["id"] as? String == oldID }) { selected = i }
         editor.vimEnabled = page == "editor" && state["vimEditing"] as? Bool == true
         render()
@@ -218,11 +219,10 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func separator(_ y: CGFloat) { let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line); add(line,CGRect(x:0,y:y,width:480,height:1)) }
     private func render() {
         let glass = state["glass"] as? Bool == true
-        // Both materials need a stable backing for our appearance-based text colors.
-        // Regular is denser; clear keeps a little more of the backdrop visible.
+        // Regular supplies contrast through its adaptive material. Clear keeps its backing.
         let dark = state["dark"] as? Bool == true
         let clearGlass = state["glassStyle"] as? String != "regular"
-        let backingOpacity: CGFloat = clearGlass ? (dark ? 0.62 : 0.72) : 0.94
+        let backingOpacity: CGFloat = clearGlass ? (dark ? 0.62 : 0.72) : 0
         view.fill = glass ? Style.canvas.withAlphaComponent(backingOpacity) : Style.canvas
         rows.fill = glass ? .clear : Style.canvas
         let responder = view.window?.firstResponder
