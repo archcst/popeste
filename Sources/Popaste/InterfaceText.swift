@@ -4,6 +4,11 @@ import Foundation
 enum InterfaceText {
     static let translations: [String: [String: String]] = [
 "en": [
+"全部": "All",
+"最近使用": "Recent",
+"标签": "Tags",
+"用逗号分隔标签": "Separate tags with commas",
+
 "磨砂玻璃": "Frosted glass",
 "液态玻璃": "Liquid Glass",
 "玻璃样式": "Glass style",
@@ -73,6 +78,11 @@ enum InterfaceText {
 "插入": "Insert"
 ],
 "zh-Hant": [
+"全部": "全部",
+"最近使用": "最近使用",
+"标签": "標籤",
+"用逗号分隔标签": "以逗號分隔標籤",
+
 "磨砂玻璃": "磨砂玻璃",
 "液态玻璃": "液態玻璃",
 "玻璃样式": "玻璃樣式",
@@ -143,6 +153,11 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
 ],
 "ja": [
+"全部": "すべて",
+"最近使用": "最近使用",
+"标签": "タグ",
+"用逗号分隔标签": "タグをカンマで区切る",
+
 "磨砂玻璃": "すりガラス",
 "液态玻璃": "Liquid Glass",
 "玻璃样式": "ガラスのスタイル",
@@ -213,6 +228,11 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
 ],
 "ko": [
+"全部": "전체",
+"最近使用": "최근 사용",
+"标签": "태그",
+"用逗号分隔标签": "쉼표로 태그 구분",
+
 "磨砂玻璃": "반투명 유리",
 "液态玻璃": "Liquid Glass",
 "玻璃样式": "글래스 스타일",
@@ -283,6 +303,11 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
 ],
 "fr": [
+"全部": "Tous",
+"最近使用": "Récents",
+"标签": "Tags",
+"用逗号分隔标签": "Séparer les tags par des virgules",
+
 "磨砂玻璃": "Verre dépoli",
 "液态玻璃": "Verre liquide",
 "玻璃样式": "Style de verre",
@@ -353,6 +378,11 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
 ],
 "de": [
+"全部": "Alle",
+"最近使用": "Zuletzt benutzt",
+"标签": "Tags",
+"用逗号分隔标签": "Tags mit Kommas trennen",
+
 "磨砂玻璃": "Milchglas",
 "液态玻璃": "Flüssigglas",
 "玻璃样式": "Glasstil",
@@ -423,6 +453,11 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
 ],
 "es": [
+"全部": "Todo",
+"最近使用": "Recientes",
+"标签": "Etiquetas",
+"用逗号分隔标签": "Separar etiquetas con comas",
+
 "磨砂玻璃": "Vidrio esmerilado",
 "液态玻璃": "Vidrio líquido",
 "玻璃样式": "Estilo de cristal",

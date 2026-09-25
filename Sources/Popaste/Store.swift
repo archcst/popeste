@@ -6,9 +6,27 @@ struct Prompt: Codable, Identifiable, Equatable {
     var pinned = false
     var uses = 0
     var updated = Date()
+    var tags: [String] = []
+    var lastUsed: Date?
+    static func normalizedTags(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        return values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+    }
     var excerpt: String { body.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
 }
-struct Archive: Codable { var version = 2; var prompts: [Prompt] }
+extension Prompt {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        body = try c.decode(String.self, forKey: .body)
+        pinned = try c.decode(Bool.self, forKey: .pinned)
+        uses = try c.decode(Int.self, forKey: .uses)
+        updated = try c.decode(Date.self, forKey: .updated)
+        tags = Self.normalizedTags(try c.decodeIfPresent([String].self, forKey: .tags) ?? [])
+        lastUsed = try c.decodeIfPresent(Date.self, forKey: .lastUsed)
+    }
+}
+struct Archive: Codable { var version = 3; var prompts: [Prompt] }
 struct ImportSummary { var added = 0; var duplicate = 0 }
 enum StoreError: LocalizedError {
     case invalid, version
@@ -34,7 +52,7 @@ final class Store {
     }
     static func decode(_ data: Data) throws -> [Prompt] {
         let archive = try JSONDecoder().decode(Archive.self, from: data)
-        guard [1, 2].contains(archive.version) else { throw StoreError.version }
+        guard [1, 2, 3].contains(archive.version) else { throw StoreError.version }
         guard Set(archive.prompts.map(\.id)).count == archive.prompts.count,
               archive.prompts.allSatisfy({ valid($0) }) else { throw StoreError.invalid }
         return archive.prompts
@@ -47,6 +65,8 @@ final class Store {
     }
     func save(_ prompt: Prompt) throws {
         guard Self.valid(prompt) else { throw StoreError.invalid }
+        var prompt = prompt
+        prompt.tags = Prompt.normalizedTags(prompt.tags)
         var values = prompts
         if let index = values.firstIndex(where: { $0.id == prompt.id }) { values[index] = prompt } else { values.append(prompt) }
         try commit(values)
@@ -54,7 +74,7 @@ final class Store {
     func delete(_ id: UUID) throws { try commit(prompts.filter { $0.id != id }) }
     func used(_ id: UUID) throws {
         guard var p = prompts.first(where: { $0.id == id }) else { return }
-        if p.uses < Int.max { p.uses += 1 }; try save(p)
+        if p.uses < Int.max { p.uses += 1 }; p.lastUsed = Date(); try save(p)
     }
     func search(_ query: String) -> [Prompt] {
         let words = query.split(whereSeparator: \.isWhitespace).map(String.init)
@@ -69,7 +89,7 @@ final class Store {
         var result = prompts; var summary = ImportSummary()
         for var p in incoming {
             if result.contains(where: { $0.body == p.body }) { summary.duplicate += 1; continue }
-            p.id = UUID(); p.uses = 0; result.append(p); summary.added += 1
+            p.id = UUID(); p.uses = 0; p.lastUsed = nil; result.append(p); summary.added += 1
         }
         return (result, summary)
     }
@@ -84,10 +104,11 @@ struct PromptDraft {
     var original: Prompt?
     var body = ""
     var pinned = false
-    var dirty: Bool { body != (original?.body ?? "") || pinned != (original?.pinned ?? false) }
+    var tags: [String] = []
+    var dirty: Bool { Prompt.normalizedTags(tags) != (original?.tags ?? []) || body != (original?.body ?? "") || pinned != (original?.pinned ?? false) }
     func savedPrompt() -> Prompt {
         var prompt = original ?? Prompt(body: "")
-        prompt.body = body; prompt.pinned = pinned; prompt.updated = Date()
+        prompt.body = body; prompt.pinned = pinned; prompt.tags = Prompt.normalizedTags(tags); prompt.updated = Date()
         return prompt
     }
 }

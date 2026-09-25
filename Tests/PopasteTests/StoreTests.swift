@@ -157,6 +157,26 @@ final class StoreTests {
         XCTAssertTrue(draft.dirty); XCTAssertEqual(store.prompts, [edited])
         XCTAssertTrue(!PromptDraft().dirty)
     }
+    func testTagsAndRecentUsage() throws {
+        let store = try makeStore()
+        var p = Prompt(body: "hello")
+        p.tags = [" Work ", "work", "", "开发"]
+        try store.save(p)
+        XCTAssertEqual(store.prompts[0].tags, ["Work", "开发"])
+        XCTAssertTrue(store.prompts[0].lastUsed == nil)
+        try store.used(p.id)
+        let used = try makeStore().prompts[0]
+        XCTAssertTrue(used.lastUsed != nil)
+        XCTAssertEqual(used.uses, 1)
+        let draft = PromptDraft(original: used, body: used.body, pinned: used.pinned, tags: ["日常"])
+        XCTAssertTrue(draft.dirty)
+        XCTAssertEqual(draft.savedPrompt().lastUsed, used.lastUsed)
+        XCTAssertEqual(draft.savedPrompt().tags, ["日常"])
+        let old: [String: Any] = ["version":2,"prompts":[["id":p.id.uuidString,"body":"legacy","pinned":false,"uses":7,"updated":1.0]]]
+        let decoded = try Store.decode(JSONSerialization.data(withJSONObject:old))[0]
+        XCTAssertEqual(decoded.tags, [])
+        XCTAssertTrue(decoded.lastUsed == nil)
+    }
     func testFailedWriteDoesNotChangeMemory() throws {
         let file = root.appendingPathComponent("file"); try Data().write(to: file)
         let s = try Store(url: file.appendingPathComponent("unwritable.json"))
@@ -174,6 +194,7 @@ func XCTAssertThrowsError<T>(_ expression: @autoclosure () throws -> T, file: St
             ("screen edges, multiple display coordinates and caret avoidance", suite.testPickerScreenGeometry),
             ("exact round trip and CRUD", suite.testExactRoundTripAndUpdates),
             ("search and pinned ranking", suite.testSearchAndRanking),
+            ("tags, legacy data and last-used persistence", suite.testTagsAndRecentUsage),
             ("non-destructive import/export", suite.testImportIsNonDestructive),
             ("invalid and future archives", suite.testInvalidInputsAndUnsupportedArchive),
             ("legacy migration, config persistence and three sizes", suite.testMigrationAndConfiguration),

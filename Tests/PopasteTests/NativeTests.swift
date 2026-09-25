@@ -146,6 +146,37 @@ import AppKit
             assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "L" } == true)
             selector.removeFromSuperview()
         }
+        // Horizontal navigation changes scope, never opens the detail page.
+        let tagUI = NativeInterface(mode: "list")
+        let tagWindow = NSWindow(contentRect:NSRect(x:0,y:0,width:480,height:424),styleMask:.borderless,backing:.buffered,defer:false)
+        tagWindow.contentView = tagUI.view
+        tagUI.state = ["prompts":[
+            ["id":"a","body":"Alpha","tags":["Work"],"lastUsed":10.0],
+            ["id":"b","body":"Beta","tags":["Work"],"lastUsed":20.0],
+            ["id":"c","body":"Gamma","tags":[]]
+        ]]
+        var selectedID = ""
+        var draftTags: [String] = []
+        tagUI.action = { name,payload in
+            if name == "insert" { selectedID = payload["id"] as? String ?? "" }
+            if name == "save" { draftTags = payload["tags"] as? [String] ?? [] }
+        }
+        assert(tagUI.handleKey(key("",code:124))) // Recent, expanded directly.
+        assert(tagUI.handleKey(key("",code:36)))
+        assert(selectedID == "b")
+        assert(tagUI.handleKey(key("",code:124))) // Work.
+        assert(tagUI.handleKey(key("",code:36)))
+        assert(selectedID == "a")
+        assert(tagUI.handleKey(key("",code:125)))
+        assert(tagUI.handleKey(key("",code:36)))
+        assert(selectedID == "b")
+        tagUI.open("edit")
+        let tagInput = tagUI.view.subviews.compactMap { $0 as? NSTextField }.first { $0.placeholderString == tr("用逗号分隔标签") }!
+        assert(tagInput.stringValue == "Work")
+        tagInput.stringValue = "Work, Personal, Work"
+        assert(tagUI.handleKey(key("s",code:1,flags:.command)))
+        assert(draftTags == ["Work", "Personal"])
+
         let savedLanguage = AppText.language
         for language in Preferences.supportedLanguages {
             AppText.language = { language }

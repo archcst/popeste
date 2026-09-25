@@ -8,7 +8,7 @@ final class Manager {
     func receive(_ payload: [String: Any]) {
         let id = (payload["id"] as? String).flatMap(UUID.init(uuidString:))
         let original = store.prompts.first { $0.id == id }
-        draft = PromptDraft(original: original, body: payload["body"] as? String ?? "", pinned: payload["pinned"] as? Bool ?? false)
+        draft = PromptDraft(original: original, body: payload["body"] as? String ?? "", pinned: payload["pinned"] as? Bool ?? false, tags: payload["tags"] as? [String] ?? [])
     }
     @discardableResult func save() throws -> Prompt {
         let prompt = draft.savedPrompt()

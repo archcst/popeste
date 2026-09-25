@@ -9,6 +9,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private let editor = NativeEditor()
     private let scroll = NSScrollView()
     private let rows = NativeCanvas()
+    private let tagField = NativeSearch()
+    private var activeTab = "all"
+    private var draftTags: [String] { Prompt.normalizedTags(tagField.stringValue.components(separatedBy: CharacterSet(charactersIn: ",，"))) }
+    private var tabs: [(String, String)] {
+        let names = Prompt.normalizedTags(prompts.flatMap { $0["tags"] as? [String] ?? [] }).sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+        return [("all",tr("全部")),("recent",tr("最近使用"))] + names.map { ("tag:"+$0.lowercased(), $0) }
+    }
     private var parts: [(NSView, CGRect)] = []
     private var page = "list", query = ""
     private var expanded = false, selected = 0, recording = false
@@ -36,15 +43,21 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private var prompts: [[String: Any]] { state["prompts"] as? [[String: Any]] ?? [] }
     private var matches: [[String: Any]] {
         let terms = query.split(whereSeparator: \.isWhitespace).map(String.init)
-        return prompts.filter { p in terms.allSatisfy { (p["body"] as? String ?? "").localizedCaseInsensitiveContains($0) } }
+        let filtered = prompts.filter { p in
+            let tags = p["tags"] as? [String] ?? []
+            let scope = activeTab == "all" || (activeTab == "recent" ? p["lastUsed"] as? Double != nil : tags.contains { "tag:"+$0.lowercased() == activeTab })
+            return scope && terms.allSatisfy { (p["body"] as? String ?? "").localizedCaseInsensitiveContains($0) }
+        }
+        return activeTab == "recent" ? filtered.sorted { ($0["lastUsed"] as? Double ?? 0) > ($1["lastUsed"] as? Double ?? 0) } : filtered
     }
     private var chosen: [String: Any]? { matches.indices.contains(selected) ? matches[selected] : nil }
-    private var dirty: Bool { page == "editor" && (editor.string != (editing?["body"] as? String ?? "") || pinned != (editing?["pinned"] as? Bool ?? false)) }
+    private var dirty: Bool { page == "editor" && (draftTags != (editing?["tags"] as? [String] ?? []) || editor.string != (editing?["body"] as? String ?? "") || pinned != (editing?["pinned"] as? Bool ?? false)) }
     init(mode: String) {
         super.init()
         view.autoresizingMask = [.width,.height]
         view.layoutContent = { [weak self] in self?.layout() }
         view.keyHandler = { [weak self] in self?.handleKey($0) ?? false }
+        tagField.delegate = self; tagField.isBordered = false; tagField.drawsBackground = false; tagField.focusRingType = .none
         search.delegate = self; search.isBordered = false; search.drawsBackground = false; search.focusRingType = .none
         search.setAccessibilityLabel(tr("搜索短语"))
         search.route = { [weak self] in self?.handleKey($0) ?? false }
@@ -60,6 +73,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func emit(_ name: String, _ payload: [String: Any] = [:]) { action?(name,payload) }
     private func applyState() {
+        if !tabs.contains(where: { $0.0 == activeTab }) { activeTab = "all" }
         let oldID = chosen?["id"] as? String
         // Glass supplies its adaptive appearance to content; only solid views set their own.
         view.appearance = state["glass"] as? Bool == true ? nil : NSAppearance(named:(state["dark"] as? Bool == true) ? .darkAqua : .aqua)
@@ -106,6 +120,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let offset = page == "preview" ? scroll.contentView.bounds.origin : .zero
         navigate {
             self.show("editor"); self.editing = phrase; self.pinned = phrase?["pinned"] as? Bool ?? false
+            self.tagField.stringValue = (phrase?["tags"] as? [String] ?? (self.tabs.first(where: { $0.0 == self.activeTab && $0.0.hasPrefix("tag:") }).map { [$0.1] } ?? [])).joined(separator: ", ")
             self.editor.string = phrase?["body"] as? String ?? ""; self.editor.undoManager?.removeAllActions()
             self.editor.vimEnabled = self.state["vimEditing"] as? Bool ?? false
             self.editor.normal = self.editor.vimEnabled; self.editor.resetCommand(); self.editor.setSelectedRange(NSRange(location:0,length:0))
@@ -116,7 +131,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         guard let chosen else { return }; editor.string = chosen["body"] as? String ?? ""
         show("preview"); scroll.contentView.scroll(to: .zero)
     }
-    private func updateDraft() { emit("draft",["id":editing?["id"] as? String ?? "","body":editor.string,"pinned":pinned]); updateMeta() }
+    private func updateDraft() { emit("draft",["id":editing?["id"] as? String ?? "","body":editor.string,"pinned":pinned,"tags":draftTags]); updateMeta() }
     private func updateMeta() {
         meta?.stringValue = "\(editor.string.count)"+tr(" 字符")
         saveState?.stringValue = tr(dirty ? "未保存" : "已保存")
@@ -129,9 +144,16 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func save() {
         guard !saving else { return }
         guard !editor.string.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty else { toast(tr("请输入短语正文")); return }
-        saving = true; emit("save",["id":editing?["id"] as? String ?? "","body":editor.string,"pinned":pinned])
+        saving = true; emit("save",["id":editing?["id"] as? String ?? "","body":editor.string,"pinned":pinned,"tags":draftTags])
     }
     func controlTextDidChange(_ obj: Notification) {
+        if obj.object as? NSTextField === tagField {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, (self.tagField.currentEditor() as? NSTextView)?.hasMarkedText() != true else { return }
+                self.updateDraft()
+            }
+            return
+        }
         // An IME can deliver its final text-change notification before unmarking.
         DispatchQueue.main.async { [weak self] in
             guard let self, (self.search.currentEditor() as? NSTextView)?.hasMarkedText() != true else { return }
@@ -158,7 +180,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         schemes.map { $0 == "arrows" ? (direction == "down" ? "↓" : "←") : "⌃"+($0 == "emacs" ? (direction == "down" ? "N" : "B") : (direction == "down" ? "J" : "H")) }.joined(separator:" / ")
     }
     func handleKey(_ event: NSEvent) -> Bool {
-        if (search.currentEditor() as? NSTextView)?.hasMarkedText() == true || (page == "editor" && editor.hasMarkedText()) { return false }
+        if (tagField.currentEditor() as? NSTextView)?.hasMarkedText() == true || (search.currentEditor() as? NSTextView)?.hasMarkedText() == true || (page == "editor" && editor.hasMarkedText()) { return false }
         let key = event.charactersIgnoringModifiers?.lowercased() ?? "", flags = event.modifierFlags.intersection([.command,.control,.option,.shift])
         if settingMenu != nil && dialog == nil {
             if event.keyCode == 53 { settingMenu = nil; render(); return true }
@@ -194,9 +216,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             if event.keyCode == 36 { insert(); return true }
         }
         if page == "list" {
-            if !expanded && (event.keyCode == 36 || nav(event,"down") || nav(event,"up") || nav(event,"forward")) { expanded = true; selected = 0; sync(); render(); focus(); return true }
+            if !expanded && (event.keyCode == 36 || nav(event,"down") || nav(event,"up")) { expanded = true; selected = 0; sync(); render(); focus(); return true }
             if nav(event,"down") || nav(event,"up") { selected += nav(event,"down") ? 1 : -1; renderRows(); return true }
-            if nav(event,"forward") { preview(); return true }
+            if nav(event,"forward") || nav(event,"back") {
+                let index = tabs.firstIndex(where: { $0.0 == activeTab }) ?? 0
+                selectTab(tabs[max(0,min(tabs.count-1,index+(nav(event,"forward") ? 1 : -1)))].0)
+                return true
+            }
             if event.keyCode == 36 { insert(); return true }
             if flags == [.command,.shift] && key == "c", let body = chosen?["body"] { emit("copy",["body":body]); return true }
         }
@@ -242,7 +268,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             add(search,CGRect(x:43,y:13.72,width:expanded ? 422 : 411-hintWidth,height:29))
             if !expanded { add(hint,CGRect(x:463-hintWidth,y:13.72,width:hintWidth,height:29)) }
             else {
-                separator(56); scroll.documentView = rows; add(scroll,CGRect(x:7,y:64,width:466,height:314))
+                separator(56); renderTabs(); scroll.documentView = rows; add(scroll,CGRect(x:7,y:104,width:466,height:274))
                 separator(379)
                 button(tr("新建短语"),CGRect(x:12,y:387.27,width:29,height:29),symbol:"plus",muted:true) { [weak self] in self?.edit(nil) }
                 countLabel = label("\(matches.count)"+(AppText.language() == "en" && matches.count == 1 ? " item" : tr(" 条")),CGRect(x:47,y:387,width:80,height:29),size:10,muted:true)
@@ -263,8 +289,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
                 let baseline = max(0,(25.5*s-(editor.layoutManager?.defaultLineHeight(for:editor.font!) ?? 25.5*s))/2)
                 editor.textStorage?.addAttributes([.font:NSFont.systemFont(ofSize:17*s),.foregroundColor:InterfacePalette.ink,.paragraphStyle:paragraph,.baselineOffset:baseline],range:NSRange(location:0,length:(editor.string as NSString).length))
                 editor.typingAttributes = [.font:NSFont.systemFont(ofSize:17*s),.foregroundColor:InterfacePalette.ink,.paragraphStyle:paragraph,.baselineOffset:baseline]
-                scroll.documentView = editor; add(scroll,CGRect(x:18,y:72,width:444,height:275.1))
+                scroll.documentView = editor; add(scroll,CGRect(x:18,y:page == "editor" ? 112 : 72,width:444,height:page == "editor" ? 235.1 : 275.1))
                 if page == "editor" {
+                    label(tr("标签"),CGRect(x:18,y:72,width:65,height:25),size:12,muted:true)
+                    tagField.font = .systemFont(ofSize:12*s); tagField.textColor = InterfacePalette.ink
+                    tagField.placeholderString = tr("用逗号分隔标签")
+                    tagField.setAccessibilityLabel(tr("标签"))
+                    add(tagField,CGRect(x:88,y:72,width:374,height:25))
                     let pinWidth = textWidth(tr("置顶"),size:11)+30
                     let pin = button(tr("置顶"),CGRect(x:463-pinWidth,y:15.44,width:pinWidth,height:25.56)) { [weak self] in guard let self else { return }; self.pinned.toggle(); self.updateDraft(); self.render() }
                     pin.font = .systemFont(ofSize:11*s); pin.leadingSymbol = "pin"; pin.symbolGap = 5; pin.selected = pinned
@@ -312,11 +343,37 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         if page == "list" { rows.frame.size.width = scroll.contentSize.width; for child in rows.subviews { child.frame.size.width = rows.bounds.width } }
         else if page != "settings" { editor.setFrameSize(NSSize(width:scroll.contentSize.width,height:max(scroll.contentSize.height,editor.frame.height))); editor.textContainer?.containerSize = NSSize(width:scroll.contentSize.width,height:CGFloat.greatestFiniteMagnitude) }
     }
+    private func selectTab(_ id: String) {
+        activeTab = id; selected = 0; expanded = true
+        sync(); render(); scroll.contentView.scroll(to: .zero); focus()
+    }
+    private func renderTabs() {
+        let strip = NSScrollView(); strip.drawsBackground = false; strip.borderType = .noBorder
+        strip.hasHorizontalScroller = false; strip.hasVerticalScroller = false
+        let content = NativeCanvas(); content.fill = .clear
+        var x: CGFloat = 0
+        var activeRect = CGRect.zero
+        for (id,title) in tabs {
+            let width = max(44,textWidth(title,size:12)+22)*s
+            let tab = NativeButton(title) { [weak self] in self?.selectTab(id) }
+            tab.font = .systemFont(ofSize:12*s); tab.selected = id == activeTab
+            tab.cornerSize = 14*s; tab.muted = !tab.selected
+            tab.setAccessibilityRole(.radioButton); tab.setAccessibilityValue(tab.selected ? 1 : 0)
+            tab.frame = CGRect(x:x,y:0,width:width,height:28*s)
+            if tab.selected { activeRect = tab.frame }
+            content.addSubview(tab); x += width+4*s
+        }
+        content.frame = CGRect(x:0,y:0,width:x,height:28*s)
+        strip.documentView = content
+        add(strip,CGRect(x:12,y:65,width:456,height:30))
+        strip.frame = CGRect(x:12*s,y:65*s,width:456*s,height:30*s)
+        content.scrollToVisible(activeRect)
+    }
     private func renderRows() {
         if page != "list" { return }
         if expanded && scroll.superview == nil { render(); return }
         selected = max(0,min(selected,matches.count-1)); rows.subviews.forEach { $0.removeFromSuperview() }
-        rows.frame = CGRect(x:0,y:0,width:466*s,height:max(314*s,CGFloat(matches.count)*46*s))
+        rows.frame = CGRect(x:0,y:0,width:466*s,height:max(scroll.contentSize.height,CGFloat(matches.count)*46*s))
         for (i,p) in matches.enumerated() {
             let row = NativeRow(body:p["body"] as? String ?? "",selected:i == selected,scale:s) { [weak self] in self?.selected = i; self?.edit(p) }
             row.glass = state["glass"] as? Bool == true
@@ -502,5 +559,11 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         DispatchQueue.main.asyncAfter(deadline:.now()+2) { [weak self,weak field] in if self?.toastGeneration == generation { field?.removeFromSuperview() } }
     }
 }
-func interfacePrompts(_ prompts: [Prompt]) -> [[String: Any]] { prompts.map { ["id":$0.id.uuidString,"body":$0.body,"pinned":$0.pinned] } }
+func interfacePrompts(_ prompts: [Prompt]) -> [[String: Any]] {
+    prompts.map { p in
+        var value: [String: Any] = ["id":p.id.uuidString,"body":p.body,"pinned":p.pinned,"tags":p.tags]
+        if let date = p.lastUsed { value["lastUsed"] = date.timeIntervalSince1970 }
+        return value
+    }
+}
 func interfaceDark(_ appearance: String = "system") -> Bool { appearance == "dark" || (appearance == "system" && NSApp.effectiveAppearance.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua) }

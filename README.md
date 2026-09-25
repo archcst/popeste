@@ -75,9 +75,15 @@ The app pastes text without sending Return or submitting the target form. You ca
 | Return | Insert the selected phrase |
 | Esc | Go back or dismiss; confirm unsaved edits when leaving the editor |
 
-When enabled, Emacs navigation uses **⌃N/P/F/B** and Vim navigation uses **⌃J/K/L/H** for next, previous, preview, and back. Vim editing is a separate, optional setting. In the unsaved-changes dialog, **Return** saves, **N** discards, and **Esc** returns to editing.
+When enabled, Emacs navigation uses **⌃N/P/F/B** and Vim navigation uses **⌃J/K/L/H** for next item, previous item, next tag, and previous tag. Vim editing is a separate, optional setting. In the unsaved-changes dialog, **Return** saves, **N** discards, and **Esc** returns to editing.
 
 Chinese input composition does not trigger filtering until the text is committed. Losing focus hides the picker while preserving the current draft.
+
+## Tags and recent items
+
+The expanded picker shows **All**, **Recent**, and your tags below the search field. Use **← / →** to switch tabs and **↑ / ↓** to choose an item. Search filters the active tab.
+
+Add tags in the phrase editor, separated by commas. A phrase can have multiple tags; new phrases created inside a tag inherit it. **Recent** lists successfully inserted phrases, newest first. Usage dates start being recorded with this feature; older usage counts are not converted into dates.
 
 ## Data and permissions
 
@@ -86,7 +92,7 @@ All app-managed preferences and phrases are stored in **`~/.config/popeste`**:
 | File | Contents |
 | --- | --- |
 | `config.json` | Shortcut, appearance, language, size, navigation, and other preferences |
-| `prompts.json` | Phrase bodies, IDs, pin status, usage counts, and timestamps |
+| `prompts.json` | Phrase bodies, IDs, pin status, tags, usage counts, and timestamps |
 | `migration-v1-backup.json` | Original phrase data saved during legacy migration, when applicable |
 
 Files use `0600` permissions and atomic writes. Existing files take precedence over legacy data; invalid data is reported instead of silently overwritten. Quit the app before editing these files manually. Use **Settings → Configuration file → Open** to reveal the folder.
