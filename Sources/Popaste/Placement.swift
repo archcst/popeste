@@ -3,12 +3,15 @@ import CoreGraphics
 
 /// AppKit screen coordinates (origin at the bottom left of the primary display).
 enum PickerPlacement {
-    /// Grow away from the insertion point; shift only when constrained by screen edges.
-    static func resizedFrame(_ current: CGRect, visibleScreen: CGRect, desiredSize: CGSize, anchorBottom: Bool = false) -> CGRect {
+    /// Expand from the collapsed search bar: down first, then up if it fits better.
+    static func resizedFrame(_ current: CGRect, visibleScreen: CGRect, desiredSize: CGSize) -> CGRect {
         let bounds = visibleScreen.insetBy(dx: 8, dy: 8)
         let size = CGSize(width: min(desiredSize.width, bounds.width), height: min(desiredSize.height, bounds.height))
+        let below = current.maxY - bounds.minY
+        let above = bounds.maxY - current.minY
+        let upward = below < size.height && (above >= size.height || above > below)
         return CGRect(x: min(max(current.minX, bounds.minX), bounds.maxX - size.width),
-                      y: min(max(anchorBottom ? current.minY : current.maxY - size.height, bounds.minY), bounds.maxY - size.height),
+                      y: min(max(upward ? current.minY : current.maxY - size.height, bounds.minY), bounds.maxY - size.height),
                       width: size.width, height: size.height)
     }
 

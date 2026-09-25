@@ -26,7 +26,7 @@ final class Picker: NSObject, NSWindowDelegate {
     private var modal = false
     private var recording = false
     private var collapsed = true
-    private var expandsUpward = false
+    private var expansionAnchor = NSRect.zero
     private var currentPage = "list"
     init(store: Store, configuration: Configuration, settings: Settings) {
         self.store = store; self.configuration = configuration; self.settings = settings
@@ -104,7 +104,7 @@ final class Picker: NSObject, NSWindowDelegate {
         let scale = configuration.value.pickerSize.scale
         // Position the visible search bar itself; expansion handles screen edges later.
         let frame = PickerPlacement.frame(caret: caret, mouse: mouse, visibleScreen: screen.visibleFrame, desiredSize: NSSize(width: 480*scale, height: (collapsed ? 57 : 424)*scale))
-        expandsUpward = frame.minY >= (caret?.maxY ?? mouse.y)
+        expansionAnchor = NSRect(x: frame.minX, y: frame.maxY - 57*scale, width: frame.width, height: 57*scale)
         panel.setFrame(frame, display: false)
         reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); interface.focus()
         if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
@@ -118,8 +118,8 @@ final class Picker: NSObject, NSWindowDelegate {
         guard panel.isVisible else { return }
         let scale = configuration.value.pickerSize.scale
         let screen = panel.screen ?? NSScreen.main!
-        let frame = PickerPlacement.resizedFrame(panel.frame, visibleScreen: screen.visibleFrame,
-            desiredSize: NSSize(width: 480*scale, height: (collapsed ? 57 : 424)*scale), anchorBottom: expandsUpward)
+        let frame = PickerPlacement.resizedFrame(expansionAnchor, visibleScreen: screen.visibleFrame,
+            desiredSize: NSSize(width: 480*scale, height: (collapsed ? 57 : 424)*scale))
         panel.setFrame(frame, display: true)
     }
     func dismiss(restore: Bool) {
