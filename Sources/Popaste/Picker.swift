@@ -80,6 +80,26 @@ final class Picker: NSObject, NSWindowDelegate {
             case "save":
                 manager.receive(payload)
                 let prompt = try manager.save(); reload(); interface.call("nativeSaved", prompt.id.uuidString)
+            case "renameTag":
+                if let old = payload["old"] as? String, let name = payload["name"] as? String {
+                    try store.renameTag(old, to: name)
+                    if let order = configuration.value.tagOrder {
+                        try configuration.update { $0.tagOrder = Prompt.normalizedTags(order.map { $0.lowercased() == old.lowercased() ? name : $0 }) }
+                    }
+                    if let color = configuration.value.tagColors?[old.lowercased()] {
+                        try configuration.update { $0.tagColors?[old.lowercased()] = nil; if $0.tagColors?[name.lowercased()] == nil { $0.tagColors?[name.lowercased()] = color } }
+                    }
+                    interface.call("nativeTagRenamed", name); reload()
+                }
+            case "deleteTag":
+                if let name = payload["name"] as? String {
+                    try store.deleteTag(name)
+                    if let order = configuration.value.tagOrder {
+                        try configuration.update { $0.tagOrder = order.filter { $0.lowercased() != name.lowercased() } }
+                    }
+                    if configuration.value.tagColors?[name.lowercased()] != nil { try configuration.update { $0.tagColors?[name.lowercased()] = nil } }
+                    interface.call("nativeTagRenamed", ""); reload()
+                }
             case "delete":
                 if let id = (payload["id"] as? String).flatMap(UUID.init(uuidString:)) {
                     try store.delete(id); manager.draft = PromptDraft(); reload(); interface.call("nativeSaved", "")

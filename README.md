@@ -81,9 +81,9 @@ Chinese input composition does not trigger filtering until the text is committed
 
 ## Tags and recent items
 
-The expanded picker shows **All**, **Recent**, and your tags below the search field. Use **← / →** to switch tabs and **↑ / ↓** to choose an item. Search filters the active tab.
+The expanded picker shows **All**, **Recent**, and your tags below the search field. Use **← / →** to switch tabs and **↑ / ↓** to choose an item. Search filters the active tab. Drag custom tags to reorder them; the order is saved and shared with the phrase editor.
 
-Add tags in the phrase editor, separated by commas. A phrase can have multiple tags; new phrases created inside a tag inherit it. **Recent** lists successfully inserted phrases, newest first. Usage dates start being recorded with this feature; older usage counts are not converted into dates.
+Toggle multiple tag capsules in the phrase editor; **No tag** clears the selection. Use **+** to add a tag. Hover over a tag and click its pencil to edit its name in place; Return saves, Esc cancels. Renaming updates all associated phrases. Clear the name and press Return to delete a tag; its phrases and their other tags remain. Tags appear to the left of each phrase; new phrases created inside a tag inherit it. Right-click a tag to choose its color from swatches or enter a custom hex color. **Recent** lists successfully inserted phrases, newest first. Usage dates start being recorded with this feature; older usage counts are not converted into dates.
 
 ## Data and permissions
 

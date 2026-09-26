@@ -8,6 +8,12 @@ final class Settings {
     init(hotKey: HotKey, configuration: Configuration) { self.hotKey = hotKey; self.configuration = configuration }
     func handle(_ name: String, _ payload: [String: Any]) throws {
         switch name {
+        case "tagColor":
+            if let tag = payload["name"] as? String, let value = payload["value"] as? String {
+                if value.isEmpty { try configuration.update { $0.tagColors?[tag.lowercased()] = nil } }
+                else if let color = TagColor.normalized(value) { try configuration.update { if $0.tagColors == nil { $0.tagColors = [:] }; $0.tagColors?[tag.lowercased()] = color } }
+            }
+        case "tagOrder": if let names = payload["value"] as? [String] { try configuration.update { $0.tagOrder = Prompt.normalizedTags(names) } }
         case "size": if let value = payload["value"] as? String, let size = PickerSize(rawValue: value) { try configuration.update { $0.pickerSize = size } }
         case "glassStyle": if let value = payload["value"] as? String, ["regular", "clear"].contains(value) { try configuration.update { $0.glassStyle = value } }
         case "appearance": if let value = payload["value"] as? String, ["system", "light", "dark"].contains(value) { try configuration.update { $0.appearance = value } }
@@ -52,6 +58,6 @@ final class Settings {
     }
     private func invalidShortcut() -> Error { NSError(domain: "Popaste", code: 1, userInfo: [NSLocalizedDescriptionKey: tr("请使用 ⌃ / ⌥ / ⌘ 加字符键或空格。原快捷键保持有效。")]) }
     var state: [String: Any] {
-        ["glassStyle": configuration.value.resolvedGlassStyle, "vimEditing": configuration.value.vimEditing ?? false, "navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
+        ["tagColors":configuration.value.tagColors ?? [:], "tagOrder":configuration.value.tagOrder ?? [], "glassStyle": configuration.value.resolvedGlassStyle, "vimEditing": configuration.value.vimEditing ?? false, "navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
     }
 }

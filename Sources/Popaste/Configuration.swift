@@ -22,6 +22,8 @@ struct Preferences: Codable, Equatable {
     var language: String?
     var vimEditing: Bool?
     var navigationSchemes: [String]?
+    var tagOrder: [String]?
+    var tagColors: [String:String]?
     var resolvedNavigationSchemes: [String] { (navigationSchemes ?? ["arrows"]).filter { ["arrows", "emacs", "vim"].contains($0) } }
     static let supportedLanguages = ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "de", "es"]
     static func resolveLanguage(_ selection: String?, preferred: [String] = Locale.preferredLanguages) -> String {
@@ -74,5 +76,29 @@ final class Configuration {
     func update(_ change: (inout Preferences) -> Void) throws {
         var next = value; change(&next)
         try persist(next); value = next; onChange?()
+    }
+}
+
+/// Keeps saved tag positions while appending new tags deterministically.
+enum TagOrder {
+    static func sorted(_ names: [String], preferred: [String]) -> [String] {
+        let available = Prompt.normalizedTags(names)
+        let saved = Prompt.normalizedTags(preferred).compactMap { name in available.first { $0.lowercased() == name.lowercased() } }
+        let keys = Set(saved.map { $0.lowercased() })
+        return saved + available.filter { !keys.contains($0.lowercased()) }.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+    static func moving(_ name: String, before target: String?, in names: [String]) -> [String] {
+        guard names.contains(name), target != name else { return names }
+        var result = names.filter { $0 != name }
+        let index = target.flatMap { result.firstIndex(of:$0) } ?? result.count
+        result.insert(name,at:index); return result
+    }
+}
+
+enum TagColor {
+    static func normalized(_ input: String) -> String? {
+        let value = input.trimmingCharacters(in:.whitespacesAndNewlines).replacingOccurrences(of:"#",with:"")
+        guard value.count == 6, value.allSatisfy({ $0.isASCII && $0.isHexDigit }) else { return nil }
+        return "#"+value.uppercased()
     }
 }

@@ -134,6 +134,16 @@ final class StoreTests {
         XCTAssertEqual(config.value.vimEditing ?? false, false)
         try config.update { $0.vimEditing = true }
         XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.vimEditing, true)
+        XCTAssertEqual(TagColor.normalized(" ff8800 "), "#FF8800")
+        XCTAssertTrue(TagColor.normalized("#GG0000") == nil)
+        try config.update { $0.tagColors = ["work":"#FF8800"] }
+        XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.tagColors, ["work":"#FF8800"])
+        try config.update { $0.tagOrder = ["开发", "Work", "Personal"] }
+        XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.tagOrder, ["开发", "Work", "Personal"])
+        XCTAssertEqual(TagOrder.sorted(["Work", "开发", "New", "work"],preferred:["开发", "missing", "Work"]),["开发", "Work", "New"])
+        XCTAssertEqual(TagOrder.moving("Work",before:"开发",in:["开发", "Work", "Personal"]),["Work", "开发", "Personal"])
+        XCTAssertEqual(TagOrder.moving("开发",before:nil,in:["开发", "Work", "Personal"]),["Work", "Personal", "开发"])
+        XCTAssertEqual(TagOrder.moving("Work",before:"Work",in:["开发", "Work"]),["开发", "Work"])
         let permission = try FileManager.default.attributesOfItem(atPath: config.url.path)[.posixPermissions] as? NSNumber
         XCTAssertEqual(permission?.intValue, 0o600)
         try Data("broken".utf8).write(to: config.url)
@@ -161,6 +171,8 @@ final class StoreTests {
         let store = try makeStore()
         var p = Prompt(body: "hello")
         p.tags = [" Work ", "work", "", "开发"]
+        let legacy = try Store.decode(JSONEncoder().encode(Archive(prompts: [p])))
+        XCTAssertEqual(legacy[0].tags, ["Work", "开发"])
         try store.save(p)
         XCTAssertEqual(store.prompts[0].tags, ["Work", "开发"])
         XCTAssertTrue(store.prompts[0].lastUsed == nil)
@@ -172,6 +184,21 @@ final class StoreTests {
         XCTAssertTrue(draft.dirty)
         XCTAssertEqual(draft.savedPrompt().lastUsed, used.lastUsed)
         XCTAssertEqual(draft.savedPrompt().tags, ["日常"])
+        var other = Prompt(body: "other"); other.tags = ["work"]; try store.save(other)
+        try store.renameTag("Work", to: " Projects ")
+        XCTAssertEqual(store.prompts.map(\.tags), [["Projects", "开发"], ["Projects"]])
+        XCTAssertEqual(store.prompts[0].body, used.body)
+        XCTAssertEqual(store.prompts[0].lastUsed, used.lastUsed)
+        XCTAssertEqual(try makeStore().prompts.map(\.tags), [["Projects", "开发"], ["Projects"]])
+        try store.renameTag("Projects", to: "  ")
+        XCTAssertEqual(store.prompts[0].tags, ["Projects", "开发"])
+        let beforeDelete = store.prompts
+        try store.deleteTag("projects")
+        XCTAssertEqual(store.prompts.count, beforeDelete.count)
+        XCTAssertEqual(store.prompts.map(\.tags), [["开发"], []])
+        XCTAssertEqual(store.prompts.map(\.body), beforeDelete.map(\.body))
+        XCTAssertEqual(store.prompts.map(\.lastUsed), beforeDelete.map(\.lastUsed))
+        XCTAssertEqual(try makeStore().prompts.map(\.tags), [["开发"], []])
         let old: [String: Any] = ["version":2,"prompts":[["id":p.id.uuidString,"body":"legacy","pinned":false,"uses":7,"updated":1.0]]]
         let decoded = try Store.decode(JSONSerialization.data(withJSONObject:old))[0]
         XCTAssertEqual(decoded.tags, [])

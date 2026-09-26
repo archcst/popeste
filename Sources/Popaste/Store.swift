@@ -12,6 +12,9 @@ struct Prompt: Codable, Identifiable, Equatable {
         var seen = Set<String>()
         return values.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
     }
+    static func singleTag(_ values: [String]) -> [String] {
+        Array(normalizedTags(values).prefix(1))
+    }
     var excerpt: String { body.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
 }
 extension Prompt {
@@ -70,6 +73,22 @@ final class Store {
         var values = prompts
         if let index = values.firstIndex(where: { $0.id == prompt.id }) { values[index] = prompt } else { values.append(prompt) }
         try commit(values)
+    }
+    func renameTag(_ oldName: String, to newName: String) throws {
+        guard let name = Prompt.singleTag([newName]).first else { return }
+        let values = prompts.map { original -> Prompt in
+            var prompt = original
+            prompt.tags = Prompt.normalizedTags(prompt.tags.map { $0.lowercased() == oldName.lowercased() ? name : $0 })
+            return prompt
+        }
+        try commit(values)
+    }
+    func deleteTag(_ name: String) throws {
+        try commit(prompts.map { original in
+            var prompt = original
+            prompt.tags.removeAll { $0.lowercased() == name.lowercased() }
+            return prompt
+        })
     }
     func delete(_ id: UUID) throws { try commit(prompts.filter { $0.id != id }) }
     func used(_ id: UUID) throws {
