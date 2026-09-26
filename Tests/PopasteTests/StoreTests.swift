@@ -131,6 +131,11 @@ final class StoreTests {
             try config.update { $0.navigationSchemes = schemes }
             XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.resolvedNavigationSchemes, schemes)
         }
+        XCTAssertEqual(config.value.expandOnShow ?? false, false)
+        for expanded in [true,false] {
+            try config.update { $0.expandOnShow = expanded }
+            XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.expandOnShow,expanded)
+        }
         XCTAssertEqual(config.value.vimEditing ?? false, false)
         try config.update { $0.vimEditing = true }
         XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.vimEditing, true)

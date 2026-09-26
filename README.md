@@ -18,7 +18,7 @@ No account, cloud service, or network connection required.
 
 ## Features
 
-- **A compact floating picker.** Starts as a search bar and expands when you type or press ↓. Appears above the text cursor when available, with a mouse-position fallback.
+- **A compact floating picker.** Starts as a search bar and expands when you type or press ↓. Enable **Expand on open** in Settings to show the full picker immediately. Appears above the text cursor when available, with a mouse-position fallback.
 - **Your text, preserved.** Store multiline text, indentation, Unicode, and emoji. Search the full body, pin frequent items, and edit in the same window.
 - **Keyboard navigation.** Choose arrow keys, Emacs, Vim, or a combination. Optional Vim editing supports normal/insert modes, visual-line movement, and undo.
 - **Native macOS appearance.** Built with Swift and AppKit. Three sizes, light/dark appearance, and frosted or liquid glass on macOS 26+.
@@ -83,7 +83,7 @@ Chinese input composition does not trigger filtering until the text is committed
 
 The expanded picker shows **All**, **Recent**, and your tags below the search field. Use **← / →** to switch tabs and **↑ / ↓** to choose an item. Search filters the active tab. Drag custom tags to reorder them; the order is saved and shared with the phrase editor.
 
-Toggle multiple tag capsules in the phrase editor; **No tag** clears the selection. Use **+** to add a tag. Hover over a tag to reveal its pencil button, then click it to edit its name and color or delete it in one panel. Return saves and Esc cancels. Renaming updates all associated phrases; deleting a tag keeps its phrases and their other tags. Tags appear to the left of each phrase; new phrases created inside a tag inherit it. Choose a color swatch or enter a custom hex color in the tag editor. **Recent** lists successfully inserted phrases, newest first. Usage dates start being recorded with this feature; older usage counts are not converted into dates.
+Toggle multiple tag capsules in the phrase editor; **No tag** clears the selection. Use **+** to add a tag. Hover over a tag for half a second to reveal its pencil button, then click it to open the tag editing popup for its name, color, and deletion. Return saves and Esc cancels. Renaming updates all associated phrases; deleting a tag keeps its phrases and their other tags. Tags appear to the left of each phrase; new phrases created inside a tag inherit it. The color row has a custom color button on the left and eight presets on the right; click the custom button to open the macOS color picker. **Recent** lists successfully inserted phrases, newest first. Usage dates start being recorded with this feature; older usage counts are not converted into dates.
 
 ## Data and permissions
 

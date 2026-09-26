@@ -4,6 +4,7 @@ import Foundation
 enum InterfaceText {
     static let translations: [String: [String: String]] = [
 "en": [
+"呼出时展开": "Expand on open",
 "全部": "All",
 "最近使用": "Recent",
 "标签": "Tag",
@@ -85,6 +86,7 @@ enum InterfaceText {
 "插入": "Insert"
 ],
 "zh-Hant": [
+"呼出时展开": "叫出時展開",
 "全部": "全部",
 "最近使用": "最近使用",
 "标签": "標籤",
@@ -167,6 +169,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
 ],
 "ja": [
+"呼出时展开": "表示時に展開",
 "全部": "すべて",
 "最近使用": "最近使用",
 "标签": "タグ",
@@ -249,6 +252,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
 ],
 "ko": [
+"呼出时展开": "열 때 펼치기",
 "全部": "전체",
 "最近使用": "최근 사용",
 "标签": "태그",
@@ -331,6 +335,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
 ],
 "fr": [
+"呼出时展开": "Développer à l’ouverture",
 "全部": "Tous",
 "最近使用": "Récents",
 "标签": "Tag",
@@ -413,6 +418,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
 ],
 "de": [
+"呼出时展开": "Beim Öffnen ausklappen",
 "全部": "Alle",
 "最近使用": "Zuletzt benutzt",
 "标签": "Tag",
@@ -495,6 +501,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
 ],
 "es": [
+"呼出时展开": "Expandir al abrir",
 "全部": "Todo",
 "最近使用": "Recientes",
 "标签": "Etiqueta",

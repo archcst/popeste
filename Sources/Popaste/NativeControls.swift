@@ -2,10 +2,15 @@ import AppKit
 
 final class NativeCanvas: NSView {
     var fill = Style.canvas
+    var usesArrowCursor = false
     var layoutContent: (() -> Void)?
     var keyHandler: ((NSEvent) -> Bool)?
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
+    override func resetCursorRects() {
+        super.resetCursorRects()
+        if usesArrowCursor { addCursorRect(bounds,cursor:.arrow) }
+    }
     override func layout() { super.layout(); layoutContent?() }
     override func draw(_ dirtyRect: NSRect) { fill.setFill(); bounds.fill() }
     override func viewDidChangeEffectiveAppearance() {
@@ -183,7 +188,7 @@ final class NativeRow: NSView {
         self.selected = selected; self.scale = scale
         edit = NativeButton(tr("编辑短语"), symbol: "square.and.pencil", action: editAction)
         super.init(frame: .zero); addSubview(edit); edit.isHidden = true; edit.selected = true; edit.selectedFill = InterfacePalette.paper; edit.cornerSize = 7*scale; edit.muted = true; edit.layoutScale = scale
-        setAccessibilityElement(true); setAccessibilityRole(.button); setAccessibilityLabel((tags + [self.body]).joined(separator: ": ")); toolTip = tags.joined(separator:", ")
+        setAccessibilityElement(true); setAccessibilityRole(.button); setAccessibilityLabel((tags + [self.body]).joined(separator: ": "))
     }
     required init?(coder: NSCoder) { fatalError() }
     override func layout() { super.layout(); edit.frame = NSRect(x: bounds.width-37*scale, y: 7*scale, width: 30*scale, height: 30*scale); edit.font = .systemFont(ofSize: 14*scale) }
@@ -260,6 +265,10 @@ enum InterfacePalette {
             return NSColor(srgbRed:CGFloat((value >> 16) & 255)/255,green:CGFloat((value >> 8) & 255)/255,blue:CGFloat(value & 255)/255,alpha:1)
         }
     }
+    static func initialTagColor(_ name: String) -> String {
+        let hash = name.lowercased().precomposedStringWithCanonicalMapping.utf8.reduce(UInt64(14695981039346656037)) { ($0 ^ UInt64($1)) &* 1099511628211 }
+        return ["#3B82F6","#14B8A6","#8B5CF6","#F59E0B","#EC4899","#65A30D"][Int(hash % 6)]
+    }
     static func tagColors(_ name: String, custom: String? = nil) -> (text: NSColor, fill: NSColor) {
         if let custom, let normalized = TagColor.normalized(custom), let rgb = UInt32(normalized.dropFirst(),radix:16) {
             func mix(_ target: UInt32, _ fraction: Double) -> UInt32 {
@@ -308,6 +317,20 @@ final class SettingsToggle: NSButton {
         (state == .on && dark ? NSColor(srgbRed:37/255,green:38/255,blue:40/255,alpha:1) : .white).setFill()
         NSBezierPath(ovalIn:NSRect(x:(state == .on ? 14 : 2)*scale,y:2*scale,width:14*scale,height:14*scale)).fill()
     }
+}
+
+final class TagEditorShield: NSView {
+    weak var tagBar: NSView?
+    var dismiss: (() -> Void)?
+    override var isFlipped: Bool { true }
+    override func resetCursorRects() {
+        super.resetCursorRects(); addCursorRect(bounds,cursor:.arrow)
+    }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        if let tagBar, convert(tagBar.bounds,from:tagBar).contains(convert(point,from:superview)) { return nil }
+        return super.hitTest(point)
+    }
+    override func mouseDown(with event: NSEvent) { dismiss?() }
 }
 
 final class SettingsMenuShield: NSView {
@@ -420,6 +443,7 @@ final class NativeTagPill: NSView, NSDraggingSource {
     let selectButton: NativeButton
     let editButton = NativeButton(tr("编辑标签"),symbol:"square.and.pencil",action:{})
     private var hoverTimer: Timer?
+    private var hoverDelay: Timer?
     private var restingWidth: CGFloat = 0
     private var expansion: CGFloat = 0
     private var hoverActive = false
@@ -460,10 +484,10 @@ final class NativeTagPill: NSView, NSDraggingSource {
         textScroll.frame = backingAlignedRect(NSRect(x:10*scale,y:(bounds.height-height)/2,width:max(1,base-18*scale),height:height),options:.alignAllEdgesNearest)
         field.setFrameSize(textScroll.contentSize)
     }
-    deinit { hoverTimer?.invalidate() }
+    deinit { hoverTimer?.invalidate(); hoverDelay?.invalidate() }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window == nil { hoverTimer?.invalidate(); hoverTimer = nil }
+        if window == nil { hoverTimer?.invalidate(); hoverTimer = nil; hoverDelay?.invalidate(); hoverDelay = nil }
     }
     override func mouseEntered(with event: NSEvent) {
         (superview as? NativeTagStrip)?.activateHover(self)
@@ -474,9 +498,19 @@ final class NativeTagPill: NSView, NSDraggingSource {
     private func setHover(_ hovered: Bool) {
         guard hovered != hoverActive else { return }
         hoverActive = hovered
-        editButton.isHidden = !hovered
+        hoverDelay?.invalidate(); hoverDelay = nil
         hoverTimer?.invalidate(); hoverTimer = nil
+        editButton.isHidden = true
         if restingWidth == 0 { restingWidth = frame.width }
+        if hovered {
+            let delay = Timer(timeInterval:0.5,repeats:false) { [weak self] _ in
+                guard let self, self.hoverActive else { return }
+                self.hoverDelay = nil; self.animateHover(true)
+            }
+            hoverDelay = delay; RunLoop.main.add(delay,forMode:.common)
+        } else { animateHover(false) }
+    }
+    private func animateHover(_ hovered: Bool) {
         let start = expansion, target: CGFloat = hovered ? 16*scale : 0
         guard start != target else { return }
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion { applyExpansion(target); return }
@@ -505,6 +539,7 @@ final class NativeTagPill: NSView, NSDraggingSource {
         needsLayout = true; layoutSubtreeIfNeeded()
     }
     private func startDragging(_ event: NSEvent) {
+        endHover()
         let item = NSPasteboardItem(); item.setString(name,forType:NativeTagStrip.pasteboardType)
         let drag = NSDraggingItem(pasteboardWriter:item)
         guard let bitmap = bitmapImageRepForCachingDisplay(in:bounds) else { return }
@@ -515,6 +550,28 @@ final class NativeTagPill: NSView, NSDraggingSource {
     }
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         context == .withinApplication ? .move : []
+    }
+}
+
+/// Tag rows scroll horizontally, including during trackpad momentum and dragging.
+final class TagScrollView: NSScrollView {
+    override init(frame: NSRect) {
+        super.init(frame:frame)
+        contentView = HorizontalTagClipView()
+        drawsBackground = false; contentView.drawsBackground = false
+        borderType = .noBorder
+        hasHorizontalScroller = false; hasVerticalScroller = false
+        verticalScrollElasticity = .none
+        automaticallyAdjustsContentInsets = false
+        contentInsets = .init()
+    }
+    required init?(coder:NSCoder) { fatalError() }
+}
+final class HorizontalTagClipView: NSClipView {
+    override func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
+        var result = super.constrainBoundsRect(proposedBounds)
+        result.origin.y = 0
+        return result
     }
 }
 

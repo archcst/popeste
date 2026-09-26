@@ -62,7 +62,7 @@ final class Picker: NSObject, NSWindowDelegate {
         guard !modal else { return }
         // Let temporary responder changes settle before deciding whether focus left.
         DispatchQueue.main.async { [weak self] in
-            guard let self, !self.modal, self.panel.isVisible, !self.panel.isKeyWindow else { return }
+            guard let self, !self.modal, self.panel.isVisible, !self.panel.isKeyWindow, self.interface.tagColorPickerWindow == nil else { return }
             self.dismiss(restore: false)
         }
     }
@@ -116,7 +116,7 @@ final class Picker: NSObject, NSWindowDelegate {
     func show(_ destination: String = "resume") {
         guard !busy, !modal else { return }
         if panel.isVisible { reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); return }
-        collapsed = destination == "list" || (destination == "resume" && currentPage == "list")
+        collapsed = (configuration.value.expandOnShow != true) && (destination == "list" || (destination == "resume" && currentPage == "list"))
         let caret = insertion.capture(), mouse = NSEvent.mouseLocation
         let point = caret.map { NSPoint(x: $0.minX, y: $0.minY) } ?? mouse
         let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main!
@@ -127,7 +127,7 @@ final class Picker: NSObject, NSWindowDelegate {
         panel.setFrame(frame, display: false)
         reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); interface.focus()
         if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] event in
-            if let self, !self.modal, event.window !== self.panel { self.dismiss(restore: false) }; return event
+            if let self, !self.modal, event.window !== self.panel, event.window !== self.interface.tagColorPickerWindow { self.dismiss(restore: false) }; return event
         }) { monitors.append(m) }
         if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
             guard let self, !self.modal else { return }; self.dismiss(restore: false)
@@ -142,6 +142,7 @@ final class Picker: NSObject, NSWindowDelegate {
         panel.setFrame(frame, display: true)
     }
     func dismiss(restore: Bool) {
+        interface.closeTagColorPicker()
         panel.orderOut(nil); monitors.forEach(NSEvent.removeMonitor); monitors.removeAll()
         recording = false
         if restore { insertion.restore() }

@@ -9,14 +9,18 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private let editor = NativeEditor()
     private let scroll = NSScrollView()
     private let rows = NativeCanvas()
-    private let listTagsScroll = NSScrollView()
-    private let editorTagsScroll = NSScrollView()
+    private let listTagsScroll = TagScrollView()
+    private let editorTagsScroll = TagScrollView()
     private var selectedTags: [String] = []
     private var activeTab = "all"
     private var renamingTag = ""
     private var renamingActiveTag = false
     private var editingTag: String?
-    private let colorField = NSTextField()
+    private var tagEditorDrafts: [String:(name:String,color:String)] = [:]
+    private var tagColor = "#3B82F6"
+    private weak var tagColorButton: NativeButton?
+    private var tagPresetButtons: [(hex:String,button:NativeButton)] = []
+    private var ownsTagColorPicker = false
     private let tagNameField = NSTextField()
     private var draftTags: [String] { Prompt.normalizedTags(selectedTags) }
     private var tabs: [(String, String)] {
@@ -65,7 +69,6 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         view.layoutContent = { [weak self] in self?.layout() }
         view.keyHandler = { [weak self] in self?.handleKey($0) ?? false }
         tagNameField.delegate = self; tagNameField.isBordered = false; tagNameField.drawsBackground = false; tagNameField.focusRingType = .none
-        colorField.delegate = self; colorField.isBordered = false; colorField.drawsBackground = false; colorField.focusRingType = .none
         search.delegate = self; search.isBordered = false; search.drawsBackground = false; search.focusRingType = .none
         search.setAccessibilityLabel(tr("搜索短语"))
         search.route = { [weak self] in self?.handleKey($0) ?? false }
@@ -100,15 +103,15 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         case "new": edit(nil)
         case "edit": if page == "list" || page == "preview", let chosen { edit(chosen) }
         case "settings": navigate { self.show("settings") }
-        case "list": navigate { self.query = ""; self.search.stringValue = ""; self.expanded = false; self.show("list", expand: false) }
+        case "list": navigate { self.query = ""; self.search.stringValue = ""; self.show("list", expand: self.state["expandOnShow"] as? Bool ?? false) }
         default:
-            if page == "list" { query = ""; search.stringValue = ""; selected = 0; expanded = false; sync(); render() }
+            if page == "list" { query = ""; search.stringValue = ""; selected = 0; expanded = state["expandOnShow"] as? Bool ?? false; sync(); render() }
         }
         DispatchQueue.main.async { [weak self] in self?.focus() }
     }
     func call(_ name: String, _ argument: Any) {
         if name == "nativeTagRenamed", let value = argument as? String {
-            editingTag = nil
+            closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll()
             if renamingActiveTag { activeTab = value.isEmpty ? "all" : "tag:"+value.lowercased() }
             selectedTags = Prompt.normalizedTags(selectedTags.map { $0.lowercased() == renamingTag.lowercased() ? value : $0 })
             if let tags = editing?["tags"] as? [String] { editing?["tags"] = Prompt.normalizedTags(tags.map { $0.lowercased() == renamingTag.lowercased() ? value : $0 }) }
@@ -125,7 +128,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func show(_ next: String, expand: Bool = true) {
         if page == "editor" { emit("discard") }
-        settingMenu = nil; editingTag = nil
+        settingMenu = nil; closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll()
         page = next; if next == "list" { expanded = expand }
         recording = false; emit("recording",["enabled":false]); sync(); render(); focus()
     }
@@ -164,7 +167,6 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     func controlTextDidChange(_ obj: Notification) {
         if obj.object as? NSTextField === tagNameField { tagNameField.textColor = InterfacePalette.ink; return }
-        if obj.object as? NSTextField === colorField { colorField.textColor = InterfacePalette.ink; return }
         // An IME can deliver its final text-change notification before unmarking.
         DispatchQueue.main.async { [weak self] in
             guard let self, (self.search.currentEditor() as? NSTextView)?.hasMarkedText() != true else { return }
@@ -192,8 +194,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     func handleKey(_ event: NSEvent) -> Bool {
         if editingTag != nil {
-            if (tagNameField.currentEditor() as? NSTextView)?.hasMarkedText() == true || (colorField.currentEditor() as? NSTextView)?.hasMarkedText() == true { return false }
-            if event.keyCode == 53 { editingTag = nil; render(); focus(); return true }
+            if (tagNameField.currentEditor() as? NSTextView)?.hasMarkedText() == true { return false }
+            if event.keyCode == 53 { closeTagEditor(); return true }
             if event.keyCode == 36 { saveTagEditor(); return true }
             return false
         }
@@ -364,66 +366,141 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         sync(); render(); scroll.contentView.scroll(to: .zero); focus()
     }
     private func tagPill(_ name: String, selected: Bool, choose: @escaping () -> Void) -> NativeTagPill {
-        let pill = NativeTagPill(name:name,selected:selected,scale:s,customColor:(state["tagColors"] as? [String:String])?[name.lowercased()],choose:choose)
+        let pill = NativeTagPill(name:name,selected:selected,scale:s,customColor:(state["tagColors"] as? [String:String])?[name.lowercased()],choose: { [weak self] in
+            if self?.editingTag != nil { self?.openTagEditor(name) } else { choose() }
+        })
         pill.editButton.invoke = { [weak self] in self?.openTagEditor(name) }
         return pill
     }
+    private func closeTagEditor() {
+        closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll(); render(); focus()
+    }
     private func openTagEditor(_ name: String) {
-        editingTag = name; tagNameField.stringValue = name
-        colorField.stringValue = (state["tagColors"] as? [String:String])?[name.lowercased()] ?? ""
+        closeTagColorPicker()
+        if let current = editingTag {
+            tagEditorDrafts[current.lowercased()] = (tagNameField.stringValue,tagColor)
+        }
+        editingTag = name
+        let draft = tagEditorDrafts[name.lowercased()]
+        tagNameField.stringValue = draft?.name ?? name
+        tagColor = draft?.color ?? (state["tagColors"] as? [String:String])?[name.lowercased()] ?? InterfacePalette.initialTagColor(name)
         render(); view.window?.makeFirstResponder(tagNameField)
     }
     private func saveTagEditor() {
         guard let old = editingTag else { return }
         let name = tagNameField.stringValue.trimmingCharacters(in:.whitespacesAndNewlines)
         guard !name.isEmpty else { tagNameField.textColor = .systemRed; return }
-        let raw = colorField.stringValue.trimmingCharacters(in:.whitespacesAndNewlines)
-        guard raw.isEmpty || TagColor.normalized(raw) != nil else { colorField.textColor = .systemRed; return }
-        let color = raw.isEmpty ? "" : TagColor.normalized(raw)!
+        let raw = tagColor.trimmingCharacters(in:.whitespacesAndNewlines)
+        guard let color = TagColor.normalized(raw) else { return }
         renamingTag = old; renamingActiveTag = activeTab == "tag:"+old.lowercased()
         if old.isEmpty || !prompts.contains(where:{ ($0["tags"] as? [String] ?? []).contains { $0.lowercased() == old.lowercased() } }) {
             selectedTags = Prompt.normalizedTags(selectedTags.filter { $0.lowercased() != old.lowercased() } + [name])
-            editingTag = nil; updateDraft(); emit("tagColor",["name":name,"value":color]); render(); focus()
+            closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll(); updateDraft(); emit("tagColor",["name":name,"value":color]); render(); focus()
         } else { emit("updateTag",["old":old,"name":name,"color":color]) }
     }
     private func deleteEditedTag() {
         guard let name = editingTag, !name.isEmpty else { return }
         renamingTag = name; renamingActiveTag = activeTab == "tag:"+name.lowercased()
         if prompts.contains(where:{ ($0["tags"] as? [String] ?? []).contains { $0.lowercased() == name.lowercased() } }) { emit("deleteTag",["name":name]) }
-        else { selectedTags.removeAll { $0.lowercased() == name.lowercased() }; editingTag = nil; updateDraft(); render(); focus() }
+        else { selectedTags.removeAll { $0.lowercased() == name.lowercased() }; closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll(); updateDraft(); render(); focus() }
+    }
+    var tagColorPickerWindow: NSWindow? {
+        let panel = NSColorPanel.shared
+        return ownsTagColorPicker && panel.isVisible ? panel : nil
+    }
+    func closeTagColorPicker() {
+        let panel = NSColorPanel.shared
+        guard ownsTagColorPicker else { return }
+        ownsTagColorPicker = false
+        panel.parent?.removeChildWindow(panel)
+        panel.orderOut(nil); panel.setTarget(nil); panel.setAction(nil)
+    }
+    private func selectedTagColor() -> NSColor {
+        let rgb = UInt32(tagColor.dropFirst(),radix:16) ?? 0x3B82F6
+        return NSColor(srgbRed:CGFloat((rgb>>16)&255)/255,green:CGFloat((rgb>>8)&255)/255,blue:CGFloat(rgb&255)/255,alpha:1)
+    }
+    private func openTagColorPicker() {
+        let panel = NSColorPanel.shared
+        panel.showsAlpha = false; panel.isContinuous = true
+        panel.color = selectedTagColor(); panel.setTarget(self); panel.setAction(#selector(changeTagColor(_:)))
+        ownsTagColorPicker = true
+        panel.level = NSWindow.Level(rawValue:NSWindow.Level.popUpMenu.rawValue+1)
+        if let window = view.window { window.addChildWindow(panel,ordered:.above) }
+        panel.makeKeyAndOrderFront(nil)
+    }
+    @objc private func changeTagColor(_ sender: NSColorPanel) {
+        guard editingTag != nil, let rgb = sender.color.usingColorSpace(.sRGB) else { return }
+        tagColor = String(format:"#%02X%02X%02X",Int((rgb.redComponent*255).rounded()),Int((rgb.greenComponent*255).rounded()),Int((rgb.blueComponent*255).rounded()))
+        updateTagColorControls()
+    }
+    private func updateTagColorControls() {
+        let customSelected = !tagPresetButtons.contains { $0.hex == tagColor }
+        tagColorButton?.outline = customSelected ? InterfacePalette.ink : nil
+        tagColorButton?.setAccessibilityValue(customSelected ? 1 : 0)
+        tagColorButton?.normalFill = selectedTagColor(); tagColorButton?.selectedFill = selectedTagColor(); tagColorButton?.needsDisplay = true
+        for (hex,button) in tagPresetButtons {
+            let selected = tagColor == hex
+            button.outline = selected ? InterfacePalette.ink : nil
+            button.setAccessibilityValue(selected ? 1 : 0); button.needsDisplay = true
+        }
     }
     private func renderTagEditor() {
         guard let name = editingTag else { return }
-        let shield = SettingsMenuShield(); shield.dismiss = { [weak self] in self?.editingTag = nil; self?.render(); self?.focus() }
+        editor.isEditable = false; editor.isSelectable = false
+        view.window?.invalidateCursorRects(for:editor)
+        let cancel: () -> Void = { [weak self] in self?.closeTagEditor() }
+        let shield = TagEditorShield(); shield.dismiss = cancel
+        shield.tagBar = page == "editor" ? editorTagsScroll : listTagsScroll
         add(shield,CGRect(x:0,y:0,width:480,height:424))
-        let box = Surface(); box.fill = InterfacePalette.paper; box.border = InterfacePalette.line; box.radius = 12*s
-        add(box,CGRect(x:18,y:106,width:330,height:198))
-        label(tr(name.isEmpty ? "新建标签" : "编辑标签"),CGRect(x:30,y:115,width:304,height:22),size:12)
+        let panelRect = CGRect(x:60,y:108,width:360,height:196)
+        let surface = GlassSurface(frame:CGRect(x:0,y:0,width:360*s,height:196*s))
+        let content = NativeCanvas(frame:surface.bounds); content.usesArrowCursor = true
+        surface.install(content)
+        surface.update(scale:s,dark:state["dark"] as? Bool ?? false,style:state["glassStyle"] as? String ?? "clear")
+        surface.layer?.borderWidth = 1
+        surface.layer?.borderColor = resolvedColor(InterfacePalette.muted.withAlphaComponent(0.3))
+        content.fill = surface.glassEnabled ? view.fill : Style.canvas
+        add(surface,panelRect)
+        let firstPart = parts.count
+        label(tr(name.isEmpty ? "新建标签" : "编辑标签"),CGRect(x:20,y:14,width:320,height:26),size:14)
         let nameBacking = Surface(); nameBacking.fill = InterfacePalette.hover; nameBacking.radius = 7*s
-        add(nameBacking,CGRect(x:30,y:145,width:300,height:28))
-        tagNameField.font = .systemFont(ofSize:12*s); tagNameField.textColor = InterfacePalette.ink
+        add(nameBacking,CGRect(x:20,y:52,width:320,height:34))
+        tagNameField.font = .systemFont(ofSize:14*s); tagNameField.textColor = InterfacePalette.ink
         tagNameField.placeholderString = tr("标签名称"); tagNameField.setAccessibilityLabel(tr("标签名称"))
-        let nameHeight = (tagNameField.cell?.cellSize.height ?? 17*s)/s
-        add(tagNameField,CGRect(x:39,y:159-nameHeight/2,width:282,height:nameHeight))
-        let palette = ["#3B82F6","#14B8A6","#8B5CF6","#F59E0B","#EC4899","#65A30D","#EF4444","#64748B"]
-        for (i,hex) in palette.enumerated() {
+        let nameHeight = (tagNameField.cell?.cellSize.height ?? 20*s)/s
+        add(tagNameField,CGRect(x:30,y:69-nameHeight/2,width:300,height:nameHeight))
+        let colorButton = button("",CGRect(x:20,y:103,width:26,height:26)) { [weak self] in self?.openTagColorPicker() }
+        colorButton.normalFill = selectedTagColor(); colorButton.selectedFill = selectedTagColor(); colorButton.cornerSize = 13*s
+        colorButton.setAccessibilityLabel(tr("标签颜色")); tagColorButton = colorButton
+        let divider = NSView(); divider.wantsLayer = true; divider.layer?.backgroundColor = resolvedColor(InterfacePalette.muted.withAlphaComponent(0.3))
+        add(divider,CGRect(x:60,y:104,width:1,height:24))
+        tagPresetButtons.removeAll()
+        let presets = ["#3B82F6","#14B8A6","#8B5CF6","#F59E0B","#EC4899","#65A30D","#EF4444","#64748B"]
+        for (index,hex) in presets.enumerated() {
+            let swatch = button("",CGRect(x:76+CGFloat(index)*34,y:103,width:26,height:26)) { [weak self] in
+                self?.closeTagColorPicker(); self?.tagColor = hex; self?.updateTagColorControls()
+            }
             let rgb = UInt32(hex.dropFirst(),radix:16)!
-            let swatch = button("",CGRect(x:30+CGFloat(i)*37,y:186,width:24,height:24)) { [weak self] in self?.colorField.stringValue = hex; self?.render() }
             swatch.normalFill = NSColor(srgbRed:CGFloat((rgb>>16)&255)/255,green:CGFloat((rgb>>8)&255)/255,blue:CGFloat(rgb&255)/255,alpha:1)
-            swatch.selectedFill = swatch.normalFill; swatch.cornerSize = 12*s
-            if TagColor.normalized(colorField.stringValue) == hex { swatch.outline = InterfacePalette.ink }
-            swatch.setAccessibilityLabel(hex)
+            swatch.selectedFill = swatch.normalFill; swatch.cornerSize = 13*s
+            swatch.setAccessibilityLabel(hex); swatch.setAccessibilityRole(.radioButton)
+            tagPresetButtons.append((hex,swatch))
         }
-        let backing = Surface(); backing.fill = InterfacePalette.hover; backing.radius = 7*s
-        add(backing,CGRect(x:30,y:221,width:210,height:28))
-        colorField.font = .monospacedSystemFont(ofSize:12*s,weight:.regular); colorField.textColor = InterfacePalette.ink
-        colorField.placeholderString = tr("自动"); colorField.setAccessibilityLabel(tr("标签颜色"))
-        let height = (colorField.cell?.cellSize.height ?? 17*s)/s
-        add(colorField,CGRect(x:39,y:235-height/2,width:192,height:height))
-        button(tr("自动"),CGRect(x:263,y:221,width:67,height:28),muted:true) { [weak self] in self?.colorField.stringValue = ""; self?.render() }
-        if !name.isEmpty { button(tr("删除标签"),CGRect(x:30,y:263,width:100,height:28),muted:true) { [weak self] in self?.deleteEditedTag() }.inkColor = .systemRed }
-        button(tr("取消"),CGRect(x:184,y:263,width:67,height:28),muted:true) { [weak self] in self?.editingTag = nil; self?.render(); self?.focus() }
-        button(tr("保存"),CGRect(x:263,y:263,width:67,height:28),primary:true) { [weak self] in self?.saveTagEditor() }
+        updateTagColorControls()
+        let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
+        add(line,CGRect(x:0,y:146,width:360,height:1))
+        if !name.isEmpty {
+            button(tr("删除标签"),CGRect(x:15,y:155,width:29,height:29),symbol:"trash",muted:true) { [weak self] in self?.deleteEditedTag() }
+        }
+        let cancelWidth = textWidth(tr("取消"),size:12)+20
+        button(tr("取消"),CGRect(x:274-cancelWidth-12,y:155,width:cancelWidth,height:29),muted:true,run:cancel)
+        button(tr("保存"),CGRect(x:286,y:155,width:54,height:30),primary:true) { [weak self] in self?.saveTagEditor() }
+        // Keep popup content within the same glass surface and appearance as the main window.
+        let popupParts = Array(parts[firstPart...]); parts.removeSubrange(firstPart...)
+        for (child,rect) in popupParts {
+            child.removeFromSuperview(); content.addSubview(child)
+            child.frame = CGRect(x:rect.minX*s,y:rect.minY*s,width:rect.width*s,height:rect.height*s)
+        }
     }
     private func renderEditorTags() {
         let strip = editorTagsScroll
@@ -522,21 +599,21 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             }
         }
         let glassAvailable = state["glass"] as? Bool == true
-        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","外观"]
+        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","呼出时展开","外观"]
             + (glassAvailable ? ["玻璃样式"] : [])
             + ["登录时启动","辅助功能权限","配置文件"]
-        func rowY(_ title: String) -> CGFloat { CGFloat(57 + (titles.firstIndex(of:title) ?? 0) * 35) }
+        func rowY(_ title: String) -> CGFloat { CGFloat(57 + (titles.firstIndex(of:title) ?? 0) * 32) }
         label("Popaste",CGRect(x:370,y:14,width:93,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
         for (i,title) in titles.enumerated() {
-            let y = CGFloat(57+i*35)
+            let y = CGFloat(57+i*32)
             let labelY = settingsControlY(row:y,height:28)
             label(tr(title),CGRect(x:18,y:labelY,width:170,height:28)).textColor = InterfacePalette.ink
             if i < titles.count - 1 {
                 let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
-                add(line,CGRect(x:18,y:y+34,width:444,height:1))
+                add(line,CGRect(x:18,y:y+31,width:444,height:1))
             }
         }
-        select("language", options:[("system","跟随系统"),("zh-Hans","简体中文"),("zh-Hant","繁體中文"),("en","English"),("ja","日本語"),("ko","한국어"),("fr","Français"),("de","Deutsch"),("es","Español")], y:57)
+        select("language", options:[("system","跟随系统"),("zh-Hans","简体中文"),("zh-Hant","繁體中文"),("en","English"),("ja","日本語"),("ko","한국어"),("fr","Français"),("de","Deutsch"),("es","Español")], y:rowY("语言"))
         let keyOptions = [("arrows","↑ ↓ ← →"),("emacs","Emacs"),("vim","Vim")]
         let keyTitle = keyOptions.filter { schemes.contains($0.0) }.map { $0.1 }.joined(separator:" / ")
         let keyWidth = min(180,controlWidth(keyTitle.isEmpty ? "—" : keyTitle))
@@ -546,8 +623,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             self?.recording = true; self?.emit("recording",["enabled":true]); self?.render(); self?.view.window?.makeFirstResponder(self?.view)
         }
         recorder.font = .systemFont(ofSize:12*s); recorder.outline = InterfacePalette.line; recorder.cornerSize = 7*s; recorder.inkColor = InterfacePalette.ink
-        select("navigationSchemes",options:keyOptions,y:92,multiple:true)
-        toggle("vimEditing",y:127,value:state["vimEditing"] as? Bool ?? false)
+        select("navigationSchemes",options:keyOptions,y:rowY("快捷键方案"),multiple:true)
+        toggle("vimEditing",y:rowY("Vim 编辑模式"),value:state["vimEditing"] as? Bool ?? false)
         let segmentTitles = ["小","中","大"].map(tr)
         let sizeValues = ["small","medium","large"]
         let selectedSize = sizeValues.firstIndex(of:state["size"] as? String ?? "large") ?? 2
@@ -565,7 +642,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             sizeControl = control
         }
         add(sizeControl,CGRect(x:462-width,y:settingsControlY(row:rowY("浮窗大小"),height:30),width:width,height:30))
-        select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:197)
+        toggle("expandOnShow",y:rowY("呼出时展开"),value:state["expandOnShow"] as? Bool ?? false)
+        select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:rowY("外观"))
         if glassAvailable {
             select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:rowY("玻璃样式"))
         }
@@ -599,9 +677,9 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func textWidth(_ text: String,size: CGFloat) -> CGFloat { (text as NSString).size(withAttributes:[.font:NSFont.systemFont(ofSize:size)]).width }
     private func controlWidth(_ title: String) -> CGFloat { textWidth(title,size:12)+37 }
-    private func settingsControlY(row:CGFloat,height:CGFloat) -> CGFloat { row+(35-height)/2 }
+    private func settingsControlY(row:CGFloat,height:CGFloat) -> CGFloat { row+(32-height)/2 }
     private func toggle(_ name: String,y: CGFloat,value: Bool) {
-        let toggle = SettingsToggle(tr(name == "login" ? "登录时启动" : "Vim 编辑模式"),enabled:value) { [weak self] enabled in self?.emit(name,["enabled":enabled]) }
+        let toggle = SettingsToggle(tr(name == "login" ? "登录时启动" : name == "expandOnShow" ? "呼出时展开" : "Vim 编辑模式"),enabled:value) { [weak self] enabled in self?.emit(name,["enabled":enabled]) }
         add(toggle,CGRect(x:432,y:settingsControlY(row:y,height:18),width:30,height:18))
     }
     private func select(_ name: String,options:[(String,String)],y:CGFloat,multiple:Bool = false) {

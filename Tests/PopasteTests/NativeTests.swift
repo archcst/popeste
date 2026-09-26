@@ -106,8 +106,8 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
                 guard isControl else { continue }
                 let center = child.frame.midY / scale
                 guard center >= 57, center < 372 else { continue }
-                let row = floor((center-57)/35)
-                assert(abs(center-(57+row*35+17.5)) < 0.01)
+                let row = floor((center-57)/32)
+                assert(abs(center-(57+row*32+16)) < 0.01)
             }
         }
         // The same settings state works with and without the native glass surface.
@@ -134,7 +134,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
             assert(!ui.view.subviews.contains { ($0 as? NativeButton)?.title == tr("液态玻璃") })
             assert(!ui.view.subviews.contains { ($0 as? NSTextField)?.stringValue == tr("玻璃样式") })
             let solidPath = ui.view.subviews.compactMap { $0 as? NSTextField }.first { $0.stringValue == "~/.config/popeste" }!.frame.minY
-            assert(abs(glassPath - solidPath - 35 * scale) < 0.01)
+            assert(abs(glassPath - solidPath - 32 * scale) < 0.01)
             assert(ui.view.fill.alphaComponent == 1)
             assert(ui.view.appearance != nil)
             assert(ui.state["glassStyle"] as? String == "clear")
@@ -153,6 +153,24 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
             assert(selector.selectedIndex == 2 && pickedSize == 2)
             assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "L" } == true)
             selector.removeFromSuperview()
+        }
+        // Both list entry points honor the persisted opening preference.
+        let openingUI = NativeInterface(mode:"list")
+        var openingCollapsed = false
+        openingUI.action = { name,payload in if name == "layout" { openingCollapsed = payload["collapsed"] as? Bool ?? false } }
+        for preference in [false,true,false] {
+            openingUI.state = ["expandOnShow":preference,"prompts":[]]
+            for destination in ["list","resume"] {
+                openingUI.open(destination)
+                assert(openingCollapsed == !preference)
+            }
+        }
+        let horizontalTags = TagScrollView(frame:NSRect(x:0,y:0,width:200,height:30))
+        horizontalTags.documentView = NativeTagStrip(frame:NSRect(x:0,y:0,width:800,height:28))
+        assert(horizontalTags.verticalScrollElasticity == .none)
+        for y: CGFloat in [-80,0,80] {
+            let constrained = horizontalTags.contentView.constrainBoundsRect(NSRect(x:70,y:y,width:200,height:30))
+            assert(constrained.minY == 0 && constrained.minX == 70)
         }
         // Horizontal navigation changes scope, never opens the detail page.
         let tagUI = NativeInterface(mode: "list")
@@ -190,7 +208,9 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         let pillFrame = workTab.frame
         let glyphFrame = workTab.field.frame
         workTab.mouseEntered(with:key(""))
-        RunLoop.current.run(until:Date().addingTimeInterval(0.22))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.25))
+        assert(workTab.frame == pillFrame && workTab.editButton.isHidden)
+        RunLoop.current.run(until:Date().addingTimeInterval(0.36))
         assert(workTab.frame.width > pillFrame.width && !workTab.editButton.isHidden)
         assert(workTab.field.frame == glyphFrame)
         workTab.mouseExited(with:key(""))
@@ -207,11 +227,14 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         for index in [0,1,2,1,0,2] {
             hoverPills[index].mouseEntered(with:key(""))
             RunLoop.current.run(until:Date().addingTimeInterval(0.025))
-            assert(hoverPills.filter { !$0.editButton.isHidden }.count == 1)
+            assert(hoverPills.allSatisfy { $0.editButton.isHidden })
             for other in hoverPills where other !== hoverPills[index] {
                 other.mouseExited(with:key(""))
             }
         }
+        RunLoop.current.run(until:Date().addingTimeInterval(0.6))
+        assert(hoverPills.filter { !$0.editButton.isHidden }.count == 1)
+        assert(!hoverPills[2].editButton.isHidden)
         hoverPills[2].mouseExited(with:key(""))
         RunLoop.current.run(until:Date().addingTimeInterval(0.1))
         assert(hoverPills.allSatisfy { $0.editButton.isHidden })
@@ -243,6 +266,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         deletingAgain.editButton.performClick(nil)
         assert(tagNameInput(tagUI).stringValue == "Work")
         let deleteButton = descendants(tagUI.view).compactMap { $0 as? NativeButton }.first { $0.title == tr("删除标签") }!
+        assert(deleteButton.symbol == "trash" && deleteButton.muted && deleteButton.inkColor == nil)
         deleteButton.performClick(nil)
         assert(deletedTag == "Work")
         tagUI.call("nativeTagRenamed", "Work")
@@ -279,10 +303,33 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         orderedUI.action = { name,payload in if name == "updateTag" { colorPayload = payload } }
         let coloredTag = descendants(orderedUI.view).compactMap { $0 as? NativeTagPill }.first!
         coloredTag.editButton.performClick(nil)
-        let hex = orderedUI.view.subviews.compactMap { $0 as? NSTextField }.first { $0.accessibilityLabel() == tr("标签颜色") }!
-        hex.stringValue = "invalid"
-        assert(orderedUI.handleKey(key("",code:36))); assert(colorPayload.isEmpty)
-        hex.stringValue = "#ff8800"
+        tagNameInput(orderedUI).stringValue = "Zebra draft"
+        let otherTag = descendants(orderedUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Alpha" }!
+        let shield = orderedUI.view.subviews.compactMap { $0 as? TagEditorShield }.first!
+        let tagPoint = otherTag.convert(NSPoint(x:otherTag.bounds.midX,y:otherTag.bounds.midY),to:orderedUI.view)
+        assert(shield.hitTest(tagPoint) == nil)
+        let popup = orderedUI.view.subviews.compactMap { $0 as? GlassSurface }.first!
+        assert(popup.layer?.borderWidth == 1)
+        assert(popup.frame.minY > otherTag.convert(otherTag.bounds,to:orderedUI.view).maxY)
+        otherTag.selectButton.performClick(nil)
+        assert(tagNameInput(orderedUI).stringValue == "Alpha")
+        tagNameInput(orderedUI).stringValue = "Alpha draft"
+        descendants(orderedUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Zebra" }!.editButton.performClick(nil)
+        assert(tagNameInput(orderedUI).stringValue == "Zebra draft")
+        tagNameInput(orderedUI).stringValue = "Zebra"
+        let colorButton = descendants(orderedUI.view).compactMap { $0 as? NativeButton }.first { $0.accessibilityLabel() == tr("标签颜色") }!
+        assert(!descendants(orderedUI.view).contains { ($0 as? NSTextField)?.placeholderString == "#RRGGBB" })
+        let preset = descendants(orderedUI.view).compactMap { $0 as? NativeButton }.first { $0.accessibilityLabel() == "#EC4899" }!
+        preset.performClick(nil)
+        assert(preset.outline != nil && colorButton.normalFill == preset.normalFill && colorButton.outline == nil)
+        colorButton.performClick(nil)
+        let colorPanel = NSColorPanel.shared
+        assert(orderedUI.tagColorPickerWindow === colorPanel)
+        colorPanel.color = NSColor(srgbRed:1,green:136.0/255,blue:0,alpha:1)
+        _ = NSApp.sendAction(NSSelectorFromString("changeTagColor:"),to:orderedUI,from:colorPanel)
+        assert(preset.outline == nil && colorButton.outline == InterfacePalette.ink)
+        orderedUI.closeTagColorPicker()
+        assert(orderedUI.tagColorPickerWindow == nil)
         assert(orderedUI.handleKey(key("",code:36)))
         assert(colorPayload["name"] as? String == "Zebra" && colorPayload["color"] as? String == "#FF8800")
 

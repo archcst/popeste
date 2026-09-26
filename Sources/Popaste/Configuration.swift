@@ -20,6 +20,7 @@ struct Preferences: Codable, Equatable {
     var glassStyle: String?
     var resolvedGlassStyle: String { glassStyle == "regular" ? "regular" : "clear" }
     var language: String?
+    var expandOnShow: Bool?
     var vimEditing: Bool?
     var navigationSchemes: [String]?
     var tagOrder: [String]?
