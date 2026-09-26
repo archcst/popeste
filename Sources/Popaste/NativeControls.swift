@@ -413,89 +413,98 @@ final class TagNameScroll: NSScrollView {
     }
 }
 
-/// Selectable capsule with an inline name editor and a hover edit action.
-final class NativeTagPill: NSView, NSTextViewDelegate, NSDraggingSource {
+/// A capsule whose trailing edit control expands on hover.
+final class NativeTagPill: NSView, NSDraggingSource {
     let name: String
     let field = TagNameField(frame:.zero)
-    private let textScroll = TagNameScroll()
     let selectButton: NativeButton
-    let editButton: NativeButton
-    var commit: ((String) -> Void)?
-    var cancel: (() -> Void)?
-    private(set) var editingName = false
-    var didBegin: (() -> Void)?
-    private var tracking: NSTrackingArea?
+    let editButton = NativeButton(tr("编辑标签"),symbol:"square.and.pencil",action:{})
+    private var hoverTimer: Timer?
+    private var restingWidth: CGFloat = 0
+    private var expansion: CGFloat = 0
+    private var hoverActive = false
+    private let textScroll = TagNameScroll()
     private let scale: CGFloat
     override var isFlipped: Bool { true }
     init(name: String, selected: Bool, scale: CGFloat, customColor: String? = nil, choose: @escaping () -> Void) {
         self.name = name; self.scale = scale
-        selectButton = NativeButton(name, action:choose)
-        editButton = NativeButton(tr("重命名标签"),symbol:"square.and.pencil",action:{})
+        selectButton = NativeButton(name,action:choose)
         super.init(frame:.zero)
         let colors = InterfacePalette.tagColors(name,custom:customColor)
         selectButton.font = .systemFont(ofSize:12*scale)
         selectButton.inkColor = colors.text; selectButton.normalFill = colors.fill; selectButton.selectedFill = colors.fill
         selectButton.outline = selected ? colors.text.withAlphaComponent(0.65) : nil
-        selectButton.cornerSize = 14*scale; selectButton.alignLeft = true; selectButton.layoutScale = scale
+        selectButton.cornerSize = 14*scale; selectButton.layoutScale = scale
         selectButton.title = ""; selectButton.setAccessibilityLabel(name)
         selectButton.setAccessibilityRole(.radioButton); selectButton.setAccessibilityValue(selected ? 1 : 0)
-        editButton.font = .systemFont(ofSize:12*scale); editButton.layoutScale = scale; editButton.iconSize = 12
-        editButton.inkColor = colors.text; editButton.isHidden = true
-        editButton.normalFill = colors.fill; editButton.selectedFill = colors.fill; editButton.cornerSize = 12*scale
-        editButton.invoke = { [weak self] in self?.beginEditing() }
         field.font = selectButton.font; field.textColor = colors.text
         field.drawsBackground = false; field.isRichText = false
         field.textContainerInset = .zero; field.textContainer?.lineFragmentPadding = 0
-        field.textContainer?.widthTracksTextView = false
-        field.textContainer?.containerSize = NSSize(width:1000000,height:1000)
+        field.textContainer?.widthTracksTextView = false; field.textContainer?.containerSize = NSSize(width:1000000,height:1000)
         field.isHorizontallyResizable = false; field.isVerticallyResizable = false
-        field.isAutomaticQuoteSubstitutionEnabled = false; field.isAutomaticDashSubstitutionEnabled = false
-        field.insertionPointColor = colors.text
-        textScroll.drawsBackground = false; textScroll.borderType = .noBorder
-        textScroll.documentView = field
-        field.delegate = self; field.stringValue = name; field.isEditable = false; field.isSelectable = false
-        field.setAccessibilityLabel(tr("重命名标签"))
+        field.string = name; field.isEditable = false; field.isSelectable = false
+        textScroll.drawsBackground = false; textScroll.borderType = .noBorder; textScroll.documentView = field
+        editButton.layoutScale = scale; editButton.iconSize = 12
+        editButton.inkColor = colors.text; editButton.isHidden = true; editButton.alphaValue = 0
+        editButton.setAccessibilityLabel(tr("编辑标签")+" "+name)
+        editButton.toolTip = tr("编辑标签")
         addSubview(selectButton); addSubview(textScroll); addSubview(editButton)
-        if !name.isEmpty { selectButton.dragHandler = { [weak self] event in self?.startDragging(event) } }
+        selectButton.dragHandler = { [weak self] event in self?.startDragging(event) }
     }
     required init?(coder:NSCoder) { fatalError() }
     override func layout() {
         super.layout(); selectButton.frame = bounds
-        editButton.frame = NSRect(x:bounds.width-25*scale,y:2*scale,width:23*scale,height:24*scale)
+        let base = restingWidth > 0 ? restingWidth : bounds.width
+        editButton.frame = NSRect(x:base-13*scale,y:2*scale,width:24*scale,height:bounds.height-4*scale)
         let height = field.layoutManager?.defaultLineHeight(for:field.font!) ?? 17*scale
-        let textFrame = NSRect(x:10*scale,y:(bounds.height-height)/2,width:max(20,bounds.width-18*scale),height:height)
-        textScroll.frame = backingAlignedRect(textFrame,options:.alignAllEdgesNearest)
-        sizeTextDocument()
+        textScroll.frame = backingAlignedRect(NSRect(x:10*scale,y:(bounds.height-height)/2,width:max(1,base-18*scale),height:height),options:.alignAllEdgesNearest)
+        field.setFrameSize(textScroll.contentSize)
     }
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas(); if let tracking { removeTrackingArea(tracking) }
-        tracking = NSTrackingArea(rect:.zero,options:[.mouseEnteredAndExited,.activeAlways,.inVisibleRect],owner:self)
-        addTrackingArea(tracking!)
+    deinit { hoverTimer?.invalidate() }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { hoverTimer?.invalidate(); hoverTimer = nil }
     }
-    override func mouseEntered(with event:NSEvent) { if !editingName { editButton.isHidden = false } }
-    override func mouseExited(with event:NSEvent) { editButton.isHidden = true }
-    func beginEditing() {
-        editingName = true; didBegin?(); editButton.isHidden = true
-        field.isEditable = true; field.isSelectable = true
-        layoutSubtreeIfNeeded(); window?.makeFirstResponder(field)
-        field.setSelectedRange(NSRange(location:(field.stringValue as NSString).length,length:0))
+    override func mouseEntered(with event: NSEvent) {
+        (superview as? NativeTagStrip)?.activateHover(self)
+        setHover(true)
     }
-    func handleKey(_ event: NSEvent) -> Bool {
-        guard !field.hasMarkedText() else { return false }
-        if event.keyCode == 36 { finish(true, allowEmpty:true); return true }
-        if event.keyCode == 53 { finish(false); return true }
-        return false
+    override func mouseExited(with event: NSEvent) { setHover(false) }
+    func endHover() { setHover(false) }
+    private func setHover(_ hovered: Bool) {
+        guard hovered != hoverActive else { return }
+        hoverActive = hovered
+        editButton.isHidden = !hovered
+        hoverTimer?.invalidate(); hoverTimer = nil
+        if restingWidth == 0 { restingWidth = frame.width }
+        let start = expansion, target: CGFloat = hovered ? 16*scale : 0
+        guard start != target else { return }
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion { applyExpansion(target); return }
+        let began = Date.timeIntervalSinceReferenceDate
+        let timer = Timer(timeInterval:1/60,repeats:true) { [weak self] timer in
+            guard let self else { timer.invalidate(); return }
+            let t = min(1,(Date.timeIntervalSinceReferenceDate-began)/0.06)
+            self.applyExpansion(start+(target-start)*CGFloat(t*t*(3-2*t)))
+            if t >= 1 { timer.invalidate(); self.hoverTimer = nil }
+        }
+        hoverTimer = timer; RunLoop.main.add(timer,forMode:.common)
     }
-    private func finish(_ save: Bool, allowEmpty: Bool = false) {
-        guard editingName else { return }; editingName = false
-        let value = field.stringValue.trimmingCharacters(in:.whitespacesAndNewlines)
-        field.isEditable = false; field.isSelectable = false
-        field.stringValue = name
-        if save && (!value.isEmpty || allowEmpty) { commit?(value) } else { cancel?() }
+    private func applyExpansion(_ value: CGFloat) {
+        let delta = value-expansion
+        expansion = value
+        if let strip = superview as? NativeTagStrip {
+            let right = frame.maxX
+            for sibling in strip.subviews where sibling !== self && sibling.frame.minX >= right-0.1 {
+                sibling.frame.origin.x += delta
+            }
+            strip.frame.size.width += delta
+        }
+        frame.size.width = restingWidth+value
+        editButton.alphaValue = value/(16*scale)
+        editButton.isHidden = !hoverActive || value == 0
+        needsLayout = true; layoutSubtreeIfNeeded()
     }
     private func startDragging(_ event: NSEvent) {
-        guard !editingName else { return }
-        editButton.isHidden = true
         let item = NSPasteboardItem(); item.setString(name,forType:NativeTagStrip.pasteboardType)
         let drag = NSDraggingItem(pasteboardWriter:item)
         guard let bitmap = bitmapImageRepForCachingDisplay(in:bounds) else { return }
@@ -507,35 +516,46 @@ final class NativeTagPill: NSView, NSTextViewDelegate, NSDraggingSource {
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         context == .withinApplication ? .move : []
     }
-    private func sizeTextDocument() {
-        let width = (field.string as NSString).size(withAttributes:[.font:field.font!]).width + 2
-        field.setFrameSize(NSSize(width:max(textScroll.contentSize.width,width),height:textScroll.contentSize.height))
-    }
-    func textDidChange(_ notification:Notification) { sizeTextDocument(); field.scrollRangeToVisible(field.selectedRange()) }
-    func textView(_ textView:NSTextView,doCommandBy selector:Selector) -> Bool {
-        guard !textView.hasMarkedText() else { return false }
-        if selector == #selector(NSResponder.insertNewline(_:)) { finish(true, allowEmpty:true); return true }
-        if selector == #selector(NSResponder.cancelOperation(_:)) { finish(false); return true }
-        return false
-    }
-    func textDidEndEditing(_ notification:Notification) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.window != nil else { return }; self.finish(true)
-        }
-    }
 }
-
 
 final class NativeTagStrip: NSView {
     static let pasteboardType = NSPasteboard.PasteboardType("app.popaste.tag-order")
     var reorder: (([String]) -> Void)?
     private var insertionX: CGFloat?
+    private weak var hoveredPill: NativeTagPill?
+    private var lastPointer: NSPoint?
+    private var tracking: NSTrackingArea?
     override var isFlipped: Bool { true }
     override init(frame: NSRect) { super.init(frame:frame); registerForDraggedTypes([Self.pasteboardType]) }
     required init?(coder:NSCoder) { fatalError() }
-    private var pills: [NativeTagPill] { subviews.compactMap { $0 as? NativeTagPill }.filter { !$0.name.isEmpty } }
+    private var pills: [NativeTagPill] { subviews.compactMap { $0 as? NativeTagPill }.filter { !$0.name.isEmpty }.sorted { $0.frame.minX < $1.frame.minX } }
+    func activateHover(_ pill: NativeTagPill) {
+        for other in pills where other !== pill { other.endHover() }
+        hoveredPill = pill
+    }
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let tracking { removeTrackingArea(tracking) }
+        tracking = NSTrackingArea(rect:.zero,options:[.mouseEnteredAndExited,.mouseMoved,.activeAlways,.inVisibleRect],owner:self)
+        addTrackingArea(tracking!)
+    }
+    override func mouseEntered(with event: NSEvent) { mouseMoved(with:event) }
+    override func mouseMoved(with event: NSEvent) {
+        let pointer = event.locationInWindow
+        guard pointer != lastPointer else { return }
+        lastPointer = pointer
+        let point = convert(pointer,from:nil)
+        // The expanded control owns its visible area until the pointer leaves it.
+        if let hoveredPill, hoveredPill.frame.contains(point) { return }
+        let next = pills.first { $0.frame.contains(point) }
+        hoveredPill?.endHover(); hoveredPill = nil
+        next?.mouseEntered(with:event)
+    }
+    override func mouseExited(with event: NSEvent) {
+        hoveredPill?.mouseExited(with:event); hoveredPill = nil; lastPointer = nil
+    }
     private func source(_ info: NSDraggingInfo) -> NativeTagPill? {
-        guard let source = info.draggingSource as? NativeTagPill, source.superview === self, !source.editingName else { return nil }
+        guard let source = info.draggingSource as? NativeTagPill, source.superview === self else { return nil }
         return source
     }
     private func target(_ info: NSDraggingInfo, source: NativeTagPill) -> NativeTagPill? {

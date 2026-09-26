@@ -80,16 +80,15 @@ final class Picker: NSObject, NSWindowDelegate {
             case "save":
                 manager.receive(payload)
                 let prompt = try manager.save(); reload(); interface.call("nativeSaved", prompt.id.uuidString)
-            case "renameTag":
-                if let old = payload["old"] as? String, let name = payload["name"] as? String {
-                    try store.renameTag(old, to: name)
-                    if let order = configuration.value.tagOrder {
-                        try configuration.update { $0.tagOrder = Prompt.normalizedTags(order.map { $0.lowercased() == old.lowercased() ? name : $0 }) }
+            case "updateTag":
+                if let old = payload["old"] as? String, let name = payload["name"] as? String, let color = payload["color"] as? String {
+                    if old != name { try store.renameTag(old,to:name) }
+                    try configuration.update {
+                        if let order = $0.tagOrder { $0.tagOrder = Prompt.normalizedTags(order.map { $0.lowercased() == old.lowercased() ? name : $0 }) }
+                        if $0.tagColors == nil { $0.tagColors = [:] }
+                        $0.tagColors?[old.lowercased()] = nil; $0.tagColors?[name.lowercased()] = color.isEmpty ? nil : color
                     }
-                    if let color = configuration.value.tagColors?[old.lowercased()] {
-                        try configuration.update { $0.tagColors?[old.lowercased()] = nil; if $0.tagColors?[name.lowercased()] == nil { $0.tagColors?[name.lowercased()] = color } }
-                    }
-                    interface.call("nativeTagRenamed", name); reload()
+                    interface.call("nativeTagRenamed",name); reload()
                 }
             case "deleteTag":
                 if let name = payload["name"] as? String {

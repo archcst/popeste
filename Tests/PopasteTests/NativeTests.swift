@@ -179,29 +179,6 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         assert(tagUI.handleKey(key("",code:36)))
         assert(selectedID == "b")
         func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
-        // Entering inline editing must preserve the same TextKit glyph positions.
-        for scale: CGFloat in [0.8,0.9,1.0] {
-            for name in ["Work", "开发", "Longer label"] {
-                let pill = NativeTagPill(name:name,selected:true,scale:scale,choose:{})
-                pill.frame = NSRect(x:0,y:0,width:160*scale,height:28*scale)
-                let testWindow = TagTestPanel(contentRect:pill.frame,styleMask:.borderless,backing:.buffered,defer:false)
-                testWindow.contentView = pill; testWindow.makeKeyAndOrderFront(nil); pill.layoutSubtreeIfNeeded()
-                let text = pill.field
-                text.layoutManager!.ensureLayout(for:text.textContainer!)
-                let range = NSRange(location:0,length:text.layoutManager!.numberOfGlyphs)
-                let before = text.convert(text.layoutManager!.boundingRect(forGlyphRange:range,in:text.textContainer!),to:nil)
-                let beforeFrame = text.frame
-                pill.beginEditing()
-                assert(testWindow.firstResponder === text)
-                RunLoop.current.run(until:Date().addingTimeInterval(0.02))
-                text.layoutManager!.ensureLayout(for:text.textContainer!)
-                let after = text.convert(text.layoutManager!.boundingRect(forGlyphRange:range,in:text.textContainer!),to:nil)
-                assert(before == after && beforeFrame == text.frame)
-                assert(text.enclosingScrollView!.contentView.bounds.origin == .zero)
-                testWindow.orderOut(nil)
-                assert(pill.handleKey(key("",code:53)))
-            }
-        }
         let beforeSwitch = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.map { $0.frame }
         assert(tagUI.handleKey(key("",code:123)))
         let afterSwitch = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.map { $0.frame }
@@ -209,28 +186,64 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         assert(tagUI.handleKey(key("",code:124)))
         assert(tagUI.handleKey(key("",code:125)))
         let workTab = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Work" }!
+        workTab.layoutSubtreeIfNeeded()
+        let pillFrame = workTab.frame
+        let glyphFrame = workTab.field.frame
+        workTab.mouseEntered(with:key(""))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.22))
+        assert(workTab.frame.width > pillFrame.width && !workTab.editButton.isHidden)
+        assert(workTab.field.frame == glyphFrame)
+        workTab.mouseExited(with:key(""))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.22))
+        assert(workTab.frame == pillFrame && workTab.editButton.isHidden)
+        // Rapid crossings, including a missing or late exit, keep one edit control visible.
+        let hoverStrip = NativeTagStrip(frame:NSRect(x:0,y:0,width:180,height:28))
+        let hoverPills = ["A","B","C"].enumerated().map { index,name in
+            let pill = NativeTagPill(name:name,selected:false,scale:1,choose:{})
+            pill.frame = NSRect(x:index*60,y:0,width:50,height:28)
+            hoverStrip.addSubview(pill); return pill
+        }
+        let originalFrames = hoverPills.map { $0.frame }
+        for index in [0,1,2,1,0,2] {
+            hoverPills[index].mouseEntered(with:key(""))
+            RunLoop.current.run(until:Date().addingTimeInterval(0.025))
+            assert(hoverPills.filter { !$0.editButton.isHidden }.count == 1)
+            for other in hoverPills where other !== hoverPills[index] {
+                other.mouseExited(with:key(""))
+            }
+        }
+        hoverPills[2].mouseExited(with:key(""))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.1))
+        assert(hoverPills.allSatisfy { $0.editButton.isHidden })
+        for (pill,original) in zip(hoverPills,originalFrames) {
+            assert(abs(pill.frame.minX-original.minX) < 0.001 && abs(pill.frame.width-original.width) < 0.001)
+        }
         let stableSearch = tagUI.view.subviews.compactMap { $0 as? NativeSearch }.first!
         let searchFrame = stableSearch.frame
-        let controlCount = tagUI.view.subviews.count
+        assert(workTab.selectButton.menu == nil && !workTab.field.isEditable)
         workTab.editButton.performClick(nil)
-        assert(stableSearch.frame == searchFrame && tagUI.view.subviews.count == controlCount)
-        assert(workTab.editingName && !workTab.field.isHidden)
-        workTab.field.stringValue = "Projects"
+        assert(stableSearch.frame == searchFrame)
+        func tagNameInput(_ ui: NativeInterface) -> NSTextField {
+            descendants(ui.view).compactMap { $0 as? NSTextField }.first { $0.placeholderString == tr("标签名称") }!
+        }
+        tagNameInput(tagUI).stringValue = "Projects"
         var renamed: [String:Any] = [:]
         let previousAction = tagUI.action
-        tagUI.action = { name,payload in if name == "renameTag" { renamed = payload } }
+        tagUI.action = { name,payload in if name == "updateTag" { renamed = payload } }
         assert(tagUI.handleKey(key("",code:36)))
         assert(renamed["old"] as? String == "Work" && renamed["name"] as? String == "Projects")
         tagUI.call("nativeTagRenamed", "Work")
         var deletedTag = ""
         tagUI.action = { name,payload in if name == "deleteTag" { deletedTag = payload["name"] as? String ?? "" } }
         let deleting = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Work" }!
-        deleting.beginEditing(); deleting.field.stringValue = ""
+        deleting.editButton.performClick(nil); tagNameInput(tagUI).stringValue = "Cancelled"
         assert(tagUI.handleKey(key("",code:53)))
         assert(deletedTag.isEmpty)
         let deletingAgain = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Work" }!
-        deletingAgain.beginEditing(); deletingAgain.field.stringValue = ""
-        assert(tagUI.handleKey(key("",code:36)))
+        deletingAgain.editButton.performClick(nil)
+        assert(tagNameInput(tagUI).stringValue == "Work")
+        let deleteButton = descendants(tagUI.view).compactMap { $0 as? NativeButton }.first { $0.title == tr("删除标签") }!
+        deleteButton.performClick(nil)
         assert(deletedTag == "Work")
         tagUI.call("nativeTagRenamed", "Work")
         tagUI.action = previousAction
@@ -242,8 +255,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         workChoice.selectButton.performClick(nil)
         let addTag = descendants(tagUI.view).compactMap { $0 as? NativeButton }.first { $0.title == tr("新建标签") }!
         addTag.performClick(nil)
-        let newTag = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name.isEmpty }!
-        newTag.beginEditing(); newTag.field.stringValue = "Personal"
+        tagNameInput(tagUI).stringValue = "Personal"
         assert(tagUI.handleKey(key("",code:36)))
         assert(tagUI.handleKey(key("s",code:1,flags:.command)))
         assert(draftTags == ["Work", "Personal"])
@@ -264,16 +276,15 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         dragStrip.reorder?(["Alpha","Zebra"])
         assert(reordered == ["Alpha","Zebra"])
         var colorPayload: [String:Any] = [:]
-        orderedUI.action = { name,payload in if name == "tagColor" { colorPayload = payload } }
+        orderedUI.action = { name,payload in if name == "updateTag" { colorPayload = payload } }
         let coloredTag = descendants(orderedUI.view).compactMap { $0 as? NativeTagPill }.first!
-        let colorItem = coloredTag.selectButton.menu!.items[0]
-        assert(NSApp.sendAction(colorItem.action!,to:colorItem.target,from:colorItem))
-        let hex = orderedUI.view.subviews.compactMap { $0 as? NSTextField }.first { $0.placeholderString == "#RRGGBB" }!
+        coloredTag.editButton.performClick(nil)
+        let hex = orderedUI.view.subviews.compactMap { $0 as? NSTextField }.first { $0.accessibilityLabel() == tr("标签颜色") }!
         hex.stringValue = "invalid"
         assert(orderedUI.handleKey(key("",code:36))); assert(colorPayload.isEmpty)
         hex.stringValue = "#ff8800"
         assert(orderedUI.handleKey(key("",code:36)))
-        assert(colorPayload["name"] as? String == "Zebra" && colorPayload["value"] as? String == "#FF8800")
+        assert(colorPayload["name"] as? String == "Zebra" && colorPayload["color"] as? String == "#FF8800")
 
         let savedLanguage = AppText.language
         for language in Preferences.supportedLanguages {
