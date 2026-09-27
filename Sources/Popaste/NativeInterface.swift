@@ -16,15 +16,20 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private var renamingTag = ""
     private var renamingActiveTag = false
     private var editingTag: String?
-    private var tagEditorDrafts: [String:(name:String,color:String)] = [:]
+    private var tagEditorDrafts: [String:(name:String,color:String,visible:Bool)] = [:]
+    private var tagVisible = true
     private var tagColor = "#3B82F6"
     private weak var tagColorButton: NativeButton?
     private var tagPresetButtons: [(hex:String,button:NativeButton)] = []
     private var ownsTagColorPicker = false
     private let tagNameField = NSTextField()
     private var draftTags: [String] { Prompt.normalizedTags(selectedTags) }
+    private var allTagNames: [String] {
+        TagOrder.sorted(prompts.flatMap { $0["tags"] as? [String] ?? [] },preferred:state["tagOrder"] as? [String] ?? [])
+    }
     private var tabs: [(String, String)] {
-        let names = TagOrder.sorted(prompts.flatMap { $0["tags"] as? [String] ?? [] },preferred:state["tagOrder"] as? [String] ?? [])
+        let hidden = Set((state["hiddenTags"] as? [String] ?? []).map { $0.lowercased() })
+        let names = allTagNames.filter { !hidden.contains($0.lowercased()) }
         return [("all",tr("全部")),("recent",tr("最近使用"))] + names.map { ("tag:"+$0.lowercased(), $0) }
     }
     private var parts: [(NSView, CGRect)] = []
@@ -378,10 +383,11 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func openTagEditor(_ name: String) {
         closeTagColorPicker()
         if let current = editingTag {
-            tagEditorDrafts[current.lowercased()] = (tagNameField.stringValue,tagColor)
+            tagEditorDrafts[current.lowercased()] = (tagNameField.stringValue,tagColor,tagVisible)
         }
         editingTag = name
         let draft = tagEditorDrafts[name.lowercased()]
+        tagVisible = draft?.visible ?? !(state["hiddenTags"] as? [String] ?? []).contains { $0.lowercased() == name.lowercased() }
         tagNameField.stringValue = draft?.name ?? name
         tagColor = draft?.color ?? (state["tagColors"] as? [String:String])?[name.lowercased()] ?? InterfacePalette.initialTagColor(name)
         render(); view.window?.makeFirstResponder(tagNameField)
@@ -395,8 +401,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         renamingTag = old; renamingActiveTag = activeTab == "tag:"+old.lowercased()
         if old.isEmpty || !prompts.contains(where:{ ($0["tags"] as? [String] ?? []).contains { $0.lowercased() == old.lowercased() } }) {
             selectedTags = Prompt.normalizedTags(selectedTags.filter { $0.lowercased() != old.lowercased() } + [name])
-            closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll(); updateDraft(); emit("tagColor",["name":name,"value":color]); render(); focus()
-        } else { emit("updateTag",["old":old,"name":name,"color":color]) }
+            closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll(); updateDraft(); emit("tagColor",["old":old,"name":name,"value":color,"visible":tagVisible]); render(); focus()
+        } else { emit("updateTag",["old":old,"name":name,"color":color,"visible":tagVisible]) }
     }
     private func deleteEditedTag() {
         guard let name = editingTag, !name.isEmpty else { return }
@@ -452,8 +458,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let shield = TagEditorShield(); shield.dismiss = cancel
         shield.tagBar = page == "editor" ? editorTagsScroll : listTagsScroll
         add(shield,CGRect(x:0,y:0,width:480,height:424))
-        let panelRect = CGRect(x:60,y:108,width:360,height:196)
-        let surface = GlassSurface(frame:CGRect(x:0,y:0,width:360*s,height:196*s))
+        let panelRect = CGRect(x:60,y:108,width:360,height:236)
+        let surface = GlassSurface(frame:CGRect(x:0,y:0,width:360*s,height:236*s))
         let content = NativeCanvas(frame:surface.bounds); content.usesArrowCursor = true
         surface.install(content)
         surface.update(scale:s,dark:state["dark"] as? Bool ?? false,style:state["glassStyle"] as? String ?? "clear")
@@ -487,14 +493,17 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             tagPresetButtons.append((hex,swatch))
         }
         updateTagColorControls()
+        label(tr("在顶部显示"),CGRect(x:20,y:145,width:260,height:30),size:12)
+        let visibility = SettingsToggle(tr("在顶部显示"),enabled:tagVisible) { [weak self] visible in self?.tagVisible = visible }
+        add(visibility,CGRect(x:310,y:151,width:30,height:18))
         let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line)
-        add(line,CGRect(x:0,y:146,width:360,height:1))
+        add(line,CGRect(x:0,y:186,width:360,height:1))
         if !name.isEmpty {
-            button(tr("删除标签"),CGRect(x:15,y:155,width:29,height:29),symbol:"trash",muted:true) { [weak self] in self?.deleteEditedTag() }
+            button(tr("删除标签"),CGRect(x:15,y:195,width:29,height:29),symbol:"trash",muted:true) { [weak self] in self?.deleteEditedTag() }
         }
         let cancelWidth = textWidth(tr("取消"),size:12)+20
-        button(tr("取消"),CGRect(x:274-cancelWidth-12,y:155,width:cancelWidth,height:29),muted:true,run:cancel)
-        button(tr("保存"),CGRect(x:286,y:155,width:54,height:30),primary:true) { [weak self] in self?.saveTagEditor() }
+        button(tr("取消"),CGRect(x:274-cancelWidth-12,y:195,width:cancelWidth,height:29),muted:true,run:cancel)
+        button(tr("保存"),CGRect(x:286,y:195,width:54,height:30),primary:true) { [weak self] in self?.saveTagEditor() }
         // Keep popup content within the same glass surface and appearance as the main window.
         let popupParts = Array(parts[firstPart...]); parts.removeSubrange(firstPart...)
         for (child,rect) in popupParts {
@@ -507,7 +516,9 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let offset = strip.contentView.bounds.origin
          strip.drawsBackground = false; strip.borderType = .noBorder
         let content = NativeTagStrip()
-        content.reorder = { [weak self] order in self?.emit("tagOrder",["value":order]) }
+        content.reorder = { [weak self] order in
+            guard let self else { return }; self.emit("tagOrder",["value":TagOrder.merging(order,into:self.allTagNames)])
+        }
         var x: CGFloat = 0; var activeRect = CGRect.zero
         let noneWidth = (textWidth(tr("无标签"),size:12)+22)*s
         let none = NativeButton(tr("无标签")) { [weak self] in
@@ -515,7 +526,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         }
         none.font = .systemFont(ofSize:12*s); none.selected = draftTags.isEmpty; none.cornerSize = 14*s; none.muted = !none.selected
         none.frame = CGRect(x:0,y:0,width:noneWidth,height:28*s); content.addSubview(none); x = noneWidth+6*s
-        let names = Prompt.normalizedTags(tabs.filter { $0.0.hasPrefix("tag:") }.map { $0.1 } + draftTags)
+        let names = Prompt.normalizedTags(allTagNames + draftTags)
         for name in names {
             let selected = draftTags.contains { $0.lowercased() == name.lowercased() }
             let pill = tagPill(name,selected:selected) { [weak self] in
@@ -542,7 +553,9 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
          strip.drawsBackground = false; strip.borderType = .noBorder
         strip.hasHorizontalScroller = false; strip.hasVerticalScroller = false
         let content = NativeTagStrip()
-        content.reorder = { [weak self] order in self?.emit("tagOrder",["value":order]) }
+        content.reorder = { [weak self] order in
+            guard let self else { return }; self.emit("tagOrder",["value":TagOrder.merging(order,into:self.allTagNames)])
+        }
         var x: CGFloat = 0
         var activeRect = CGRect.zero
         for (id,title) in tabs {

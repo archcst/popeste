@@ -136,6 +136,14 @@ final class StoreTests {
             try config.update { $0.expandOnShow = expanded }
             XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.expandOnShow,expanded)
         }
+        XCTAssertTrue(config.value.hiddenTags == nil)
+        try config.update { $0.setTagVisibility("Work",visible:false) }
+        XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.hiddenTags,["work"])
+        try config.update { $0.setTagVisibility("Projects",visible:false,replacing:"WORK") }
+        XCTAssertEqual(config.value.hiddenTags,["projects"])
+        try config.update { $0.setTagVisibility("PROJECTS",visible:true) }
+        XCTAssertEqual(config.value.hiddenTags,[])
+        XCTAssertEqual(TagOrder.merging(["B","A"],into:["A","Hidden","B"]),["B","Hidden","A"])
         XCTAssertEqual(config.value.vimEditing ?? false, false)
         try config.update { $0.vimEditing = true }
         XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.vimEditing, true)

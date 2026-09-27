@@ -4,6 +4,7 @@ import Foundation
 enum InterfaceText {
     static let translations: [String: [String: String]] = [
 "en": [
+"在顶部显示": "Show in top bar",
 "呼出时展开": "Expand on open",
 "全部": "All",
 "最近使用": "Recent",
@@ -86,6 +87,7 @@ enum InterfaceText {
 "插入": "Insert"
 ],
 "zh-Hant": [
+"在顶部显示": "在頂部顯示",
 "呼出时展开": "叫出時展開",
 "全部": "全部",
 "最近使用": "最近使用",
@@ -169,6 +171,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
 ],
 "ja": [
+"在顶部显示": "上部に表示",
 "呼出时展开": "表示時に展開",
 "全部": "すべて",
 "最近使用": "最近使用",
@@ -252,6 +255,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
 ],
 "ko": [
+"在顶部显示": "상단에 표시",
 "呼出时展开": "열 때 펼치기",
 "全部": "전체",
 "最近使用": "최근 사용",
@@ -335,6 +339,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
 ],
 "fr": [
+"在顶部显示": "Afficher en haut",
 "呼出时展开": "Développer à l’ouverture",
 "全部": "Tous",
 "最近使用": "Récents",
@@ -418,6 +423,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
 ],
 "de": [
+"在顶部显示": "Oben anzeigen",
 "呼出时展开": "Beim Öffnen ausklappen",
 "全部": "Alle",
 "最近使用": "Zuletzt benutzt",
@@ -501,6 +507,7 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
 ],
 "es": [
+"在顶部显示": "Mostrar arriba",
 "呼出时展开": "Expandir al abrir",
 "全部": "Todo",
 "最近使用": "Recientes",

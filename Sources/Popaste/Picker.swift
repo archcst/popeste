@@ -84,6 +84,8 @@ final class Picker: NSObject, NSWindowDelegate {
                 if let old = payload["old"] as? String, let name = payload["name"] as? String, let color = payload["color"] as? String {
                     if old != name { try store.renameTag(old,to:name) }
                     try configuration.update {
+                        let visible = payload["visible"] as? Bool ?? !($0.hiddenTags ?? []).contains { $0.lowercased() == old.lowercased() }
+                        $0.setTagVisibility(name,visible:visible,replacing:old)
                         if let order = $0.tagOrder { $0.tagOrder = Prompt.normalizedTags(order.map { $0.lowercased() == old.lowercased() ? name : $0 }) }
                         if $0.tagColors == nil { $0.tagColors = [:] }
                         $0.tagColors?[old.lowercased()] = nil; $0.tagColors?[name.lowercased()] = color.isEmpty ? nil : color
@@ -93,6 +95,7 @@ final class Picker: NSObject, NSWindowDelegate {
             case "deleteTag":
                 if let name = payload["name"] as? String {
                     try store.deleteTag(name)
+                    try configuration.update { $0.setTagVisibility(name,visible:true) }
                     if let order = configuration.value.tagOrder {
                         try configuration.update { $0.tagOrder = order.filter { $0.lowercased() != name.lowercased() } }
                     }

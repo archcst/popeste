@@ -208,9 +208,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         let pillFrame = workTab.frame
         let glyphFrame = workTab.field.frame
         workTab.mouseEntered(with:key(""))
-        RunLoop.current.run(until:Date().addingTimeInterval(0.25))
-        assert(workTab.frame == pillFrame && workTab.editButton.isHidden)
-        RunLoop.current.run(until:Date().addingTimeInterval(0.36))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.08))
         assert(workTab.frame.width > pillFrame.width && !workTab.editButton.isHidden)
         assert(workTab.field.frame == glyphFrame)
         workTab.mouseExited(with:key(""))
@@ -219,7 +217,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         // Rapid crossings, including a missing or late exit, keep one edit control visible.
         let hoverStrip = NativeTagStrip(frame:NSRect(x:0,y:0,width:180,height:28))
         let hoverPills = ["A","B","C"].enumerated().map { index,name in
-            let pill = NativeTagPill(name:name,selected:false,scale:1,choose:{})
+            let pill = NativeTagPill(name:name,selected:index != 1,scale:1,choose:{})
             pill.frame = NSRect(x:index*60,y:0,width:50,height:28)
             hoverStrip.addSubview(pill); return pill
         }
@@ -227,12 +225,13 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         for index in [0,1,2,1,0,2] {
             hoverPills[index].mouseEntered(with:key(""))
             RunLoop.current.run(until:Date().addingTimeInterval(0.025))
-            assert(hoverPills.allSatisfy { $0.editButton.isHidden })
+            assert(hoverPills.filter { !$0.editButton.isHidden }.count == (index == 1 ? 0 : 1))
+            assert(hoverPills[1].editButton.isHidden && hoverPills[1].frame.width == originalFrames[1].width)
             for other in hoverPills where other !== hoverPills[index] {
                 other.mouseExited(with:key(""))
             }
         }
-        RunLoop.current.run(until:Date().addingTimeInterval(0.6))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.08))
         assert(hoverPills.filter { !$0.editButton.isHidden }.count == 1)
         assert(!hoverPills[2].editButton.isHidden)
         hoverPills[2].mouseExited(with:key(""))
@@ -332,6 +331,23 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         assert(orderedUI.tagColorPickerWindow == nil)
         assert(orderedUI.handleKey(key("",code:36)))
         assert(colorPayload["name"] as? String == "Zebra" && colorPayload["color"] as? String == "#FF8800")
+
+        let hiddenUI = NativeInterface(mode:"list")
+        hiddenUI.state = ["hiddenTags":["work"],"prompts":[["id":"hidden","body":"A phrase","tags":["Work"]]]]
+        hiddenUI.open("list"); _ = hiddenUI.handleKey(key("",code:125))
+        assert(descendants(hiddenUI.view).compactMap { ($0 as? NativeTagPill)?.name }.isEmpty)
+        assert(descendants(hiddenUI.view).compactMap { $0 as? NativeRow }.first!.tags == ["Work"])
+        hiddenUI.open("edit")
+        let hiddenTag = descendants(hiddenUI.view).compactMap { $0 as? NativeTagPill }.first!
+        assert(hiddenTag.name == "Work")
+        hiddenTag.editButton.performClick(nil)
+        let visibility = descendants(hiddenUI.view).compactMap { $0 as? SettingsToggle }.first { $0.accessibilityLabel() == tr("在顶部显示") }!
+        assert(visibility.state == .off)
+        visibility.performClick(nil)
+        var savedVisibility: Bool?
+        hiddenUI.action = { name,payload in if name == "updateTag" { savedVisibility = payload["visible"] as? Bool } }
+        _ = hiddenUI.handleKey(key("",code:36))
+        assert(savedVisibility == true)
 
         let savedLanguage = AppText.language
         for language in Preferences.supportedLanguages {

@@ -12,6 +12,9 @@ final class Settings {
             if let tag = payload["name"] as? String, let value = payload["value"] as? String {
                 if value.isEmpty { try configuration.update { $0.tagColors?[tag.lowercased()] = nil } }
                 else if let color = TagColor.normalized(value) { try configuration.update { if $0.tagColors == nil { $0.tagColors = [:] }; $0.tagColors?[tag.lowercased()] = color } }
+                if let visible = payload["visible"] as? Bool {
+                    try configuration.update { $0.setTagVisibility(tag,visible:visible,replacing:payload["old"] as? String) }
+                }
             }
         case "tagOrder": if let names = payload["value"] as? [String] { try configuration.update { $0.tagOrder = Prompt.normalizedTags(names) } }
         case "size": if let value = payload["value"] as? String, let size = PickerSize(rawValue: value) { try configuration.update { $0.pickerSize = size } }
@@ -59,6 +62,6 @@ final class Settings {
     }
     private func invalidShortcut() -> Error { NSError(domain: "Popaste", code: 1, userInfo: [NSLocalizedDescriptionKey: tr("请使用 ⌃ / ⌥ / ⌘ 加字符键或空格。原快捷键保持有效。")]) }
     var state: [String: Any] {
-        ["expandOnShow":configuration.value.expandOnShow ?? false, "tagColors":configuration.value.tagColors ?? [:], "tagOrder":configuration.value.tagOrder ?? [], "glassStyle": configuration.value.resolvedGlassStyle, "vimEditing": configuration.value.vimEditing ?? false, "navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
+        ["hiddenTags":configuration.value.hiddenTags ?? [], "expandOnShow":configuration.value.expandOnShow ?? false, "tagColors":configuration.value.tagColors ?? [:], "tagOrder":configuration.value.tagOrder ?? [], "glassStyle": configuration.value.resolvedGlassStyle, "vimEditing": configuration.value.vimEditing ?? false, "navigationSchemes": configuration.value.resolvedNavigationSchemes, "language": configuration.value.language ?? "system", "resolvedLanguage": configuration.value.resolvedLanguage, "prompts": [], "shortcut": hotKey.shortcut.label, "size": configuration.value.pickerSize.rawValue, "trusted": AXIsProcessTrusted(), "login": SMAppService.mainApp.status == .enabled, "loginPending": SMAppService.mainApp.status == .requiresApproval, "appearance": configuration.value.appearance ?? "system", "dark": interfaceDark(configuration.value.appearance ?? "system")]
     }
 }

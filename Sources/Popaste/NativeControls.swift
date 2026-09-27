@@ -443,7 +443,7 @@ final class NativeTagPill: NSView, NSDraggingSource {
     let selectButton: NativeButton
     let editButton = NativeButton(tr("编辑标签"),symbol:"square.and.pencil",action:{})
     private var hoverTimer: Timer?
-    private var hoverDelay: Timer?
+    private let editableOnHover: Bool
     private var restingWidth: CGFloat = 0
     private var expansion: CGFloat = 0
     private var hoverActive = false
@@ -451,7 +451,7 @@ final class NativeTagPill: NSView, NSDraggingSource {
     private let scale: CGFloat
     override var isFlipped: Bool { true }
     init(name: String, selected: Bool, scale: CGFloat, customColor: String? = nil, choose: @escaping () -> Void) {
-        self.name = name; self.scale = scale
+        self.name = name; self.scale = scale; self.editableOnHover = selected
         selectButton = NativeButton(name,action:choose)
         super.init(frame:.zero)
         let colors = InterfacePalette.tagColors(name,custom:customColor)
@@ -484,31 +484,24 @@ final class NativeTagPill: NSView, NSDraggingSource {
         textScroll.frame = backingAlignedRect(NSRect(x:10*scale,y:(bounds.height-height)/2,width:max(1,base-18*scale),height:height),options:.alignAllEdgesNearest)
         field.setFrameSize(textScroll.contentSize)
     }
-    deinit { hoverTimer?.invalidate(); hoverDelay?.invalidate() }
+    deinit { hoverTimer?.invalidate() }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window == nil { hoverTimer?.invalidate(); hoverTimer = nil; hoverDelay?.invalidate(); hoverDelay = nil }
+        if window == nil { hoverTimer?.invalidate(); hoverTimer = nil }
     }
     override func mouseEntered(with event: NSEvent) {
         (superview as? NativeTagStrip)?.activateHover(self)
-        setHover(true)
+        setHover(editableOnHover)
     }
     override func mouseExited(with event: NSEvent) { setHover(false) }
     func endHover() { setHover(false) }
     private func setHover(_ hovered: Bool) {
         guard hovered != hoverActive else { return }
         hoverActive = hovered
-        hoverDelay?.invalidate(); hoverDelay = nil
         hoverTimer?.invalidate(); hoverTimer = nil
         editButton.isHidden = true
         if restingWidth == 0 { restingWidth = frame.width }
-        if hovered {
-            let delay = Timer(timeInterval:0.5,repeats:false) { [weak self] _ in
-                guard let self, self.hoverActive else { return }
-                self.hoverDelay = nil; self.animateHover(true)
-            }
-            hoverDelay = delay; RunLoop.main.add(delay,forMode:.common)
-        } else { animateHover(false) }
+        animateHover(hovered)
     }
     private func animateHover(_ hovered: Bool) {
         let start = expansion, target: CGFloat = hovered ? 16*scale : 0

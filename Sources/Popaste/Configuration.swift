@@ -25,6 +25,11 @@ struct Preferences: Codable, Equatable {
     var navigationSchemes: [String]?
     var tagOrder: [String]?
     var tagColors: [String:String]?
+    var hiddenTags: [String]?
+    mutating func setTagVisibility(_ name: String, visible: Bool, replacing old: String? = nil) {
+        hiddenTags = (hiddenTags ?? []).filter { $0.lowercased() != name.lowercased() && $0.lowercased() != old?.lowercased() }
+        if !visible { hiddenTags?.append(name.lowercased()) }
+    }
     var resolvedNavigationSchemes: [String] { (navigationSchemes ?? ["arrows"]).filter { ["arrows", "emacs", "vim"].contains($0) } }
     static let supportedLanguages = ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fr", "de", "es"]
     static func resolveLanguage(_ selection: String?, preferred: [String] = Locale.preferredLanguages) -> String {
@@ -82,6 +87,13 @@ final class Configuration {
 
 /// Keeps saved tag positions while appending new tags deterministically.
 enum TagOrder {
+    static func merging(_ visibleOrder: [String], into all: [String]) -> [String] {
+        let order = Prompt.normalizedTags(visibleOrder)
+        let keys = Set(order.map { $0.lowercased() })
+        var remaining = order.makeIterator()
+        let merged = all.map { keys.contains($0.lowercased()) ? (remaining.next() ?? $0) : $0 }
+        return Prompt.normalizedTags(merged + Array(remaining))
+    }
     static func sorted(_ names: [String], preferred: [String]) -> [String] {
         let available = Prompt.normalizedTags(names)
         let saved = Prompt.normalizedTags(preferred).compactMap { name in available.first { $0.lowercased() == name.lowercased() } }
