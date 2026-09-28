@@ -21,13 +21,14 @@ No account, cloud service, or network connection required.
 - **A compact floating picker.** Starts as a search bar and expands when you type or press ↓. Enable **Expand on open** in Settings to show the full picker immediately. Appears above the text cursor when available, with a mouse-position fallback.
 - **Your text, preserved.** Store multiline text, indentation, Unicode, and emoji. Search the full body, pin frequent items, and edit in the same window.
 - **Keyboard navigation.** Choose arrow keys, Emacs, Vim, or a combination. Optional Vim editing supports normal/insert modes, visual-line movement, and undo.
-- **Native macOS appearance.** Built with Swift and AppKit. Three sizes, light/dark appearance, and frosted or liquid glass on macOS 26+.
+- **Keep the window pinned.** Use the pin beside Settings to keep the window on top across app switches. Esc dismisses it; Return inserts and dismisses; Ctrl+Return inserts while keeping focus for the next phrase. Reopening retains the pin state.
+- **Native macOS appearance.** Built with Swift and AppKit. Three UI scales, draggable window edges that resize the content area without changing text size, light/dark appearance, and frosted or liquid glass on macOS 26+.
 - **Local storage.** Phrases and preferences live in `~/.config/popeste`, with atomic writes and protection against overwriting invalid data.
 - **Eight interface languages.** English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, and Spanish. Follows the system language by default.
 
 ## Install with Homebrew
 
-The first release is an **unnotarized test build** for Apple Silicon Macs running macOS 14+. macOS 14–15 device testing is still pending.
+This release is an **unnotarized test build** for Apple Silicon Macs running macOS 14+. macOS 14–15 device testing is still pending.
 
 ```sh
 brew tap archcst/tap
@@ -72,12 +73,13 @@ The app pastes text without sending Return or submitting the target form. You ca
 | ⌘, | Settings |
 | ⌘S | Save the editor |
 | ⌘⇧C | Copy the selected phrase |
-| Return | Insert the selected phrase |
+| Return | Insert the selected phrase and dismiss |
+| ⌘Return / ⌃Return | Insert and keep focus for consecutive insertions |
 | Esc | Go back or dismiss; confirm unsaved edits when leaving the editor |
 
 When enabled, Emacs navigation uses **⌃N/P/F/B** and Vim navigation uses **⌃J/K/L/H** for next item, previous item, next tag, and previous tag. Vim editing is a separate, optional setting. In the unsaved-changes dialog, **Return** saves, **N** discards, and **Esc** returns to editing.
 
-Chinese input composition does not trigger filtering until the text is committed. Losing focus hides the picker while preserving the current draft.
+Chinese input composition does not trigger filtering until the text is committed. Losing focus hides the picker while preserving the current draft unless the window is pinned.
 
 ## Tags and recent items
 

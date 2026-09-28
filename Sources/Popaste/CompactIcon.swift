@@ -3,6 +3,12 @@ import AppKit
 /// The approved design's 24-point outline paths, shared by every native page.
 enum CompactIcon {
     static func draw(_ name: String, in rect: NSRect, color: NSColor) {
+        if name == "return", let image = NSImage(systemSymbolName:"return",accessibilityDescription:nil)?.withSymbolConfiguration(.init(paletteColors:[color])) {
+            let height = min(rect.height,rect.width*image.size.height/image.size.width)
+            let width = height*image.size.width/image.size.height
+            image.draw(in:NSRect(x:rect.midX-width/2,y:rect.midY-height/2,width:width,height:height),from:.zero,operation:.sourceOver,fraction:1,respectFlipped:true,hints:nil)
+            return
+        }
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current?.cgContext.translateBy(x:rect.minX,y:rect.minY); NSGraphicsContext.current?.cgContext.scaleBy(x:rect.width/24,y:rect.height/24)
         let p = NSBezierPath(); p.lineWidth = 1.5; p.lineCapStyle = .round; p.lineJoinStyle = .round
@@ -16,6 +22,8 @@ enum CompactIcon {
             move(4,7); line(8,7); move(12,7); line(20,7); move(4,17); line(12,17); move(16,17); line(20,17)
             p.appendOval(in:NSRect(x:8,y:5,width:4,height:4)); p.appendOval(in:NSRect(x:12,y:15,width:4,height:4))
         case "pin": move(8,3); line(16,3); line(15,10); line(18,14); line(6,14); line(9,10); p.close(); move(12,14); line(12,21)
+        case "pin.slash":
+            move(8,3); line(16,3); line(15,9); move(16,11); line(18,14); line(12,14); move(8,8); line(9,10); line(6,14); line(9,14); move(12,16); line(12,21); move(3,3); line(21,21)
         case "trash": move(4,6); line(20,6); move(9,6); line(9,3); line(15,3); line(15,6); move(6,6); line(7,21); line(17,21); line(18,6); move(10,10); line(10,17); move(14,10); line(14,17)
         case "square.and.pencil":
             move(14,5); line(18,9); move(4,20); line(8,19); line(20,7)

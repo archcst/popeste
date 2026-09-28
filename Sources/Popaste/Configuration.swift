@@ -10,10 +10,20 @@ enum PickerSize: String, Codable, CaseIterable {
     var scale: Double { switch self { case .small: return 0.8; case .medium: return 0.9; case .large: return 1 } }
     var label: String { switch self { case .small: return "小"; case .medium: return "中"; case .large: return "大" } }
 }
+struct PickerDimensions: Codable, Equatable {
+    var width: Double
+    var height: Double
+    var constrained: PickerDimensions {
+        PickerDimensions(width:width.isFinite ? max(480,min(1600,width)) : 480,
+                         height:height.isFinite ? max(196,min(1400,height)) : 424)
+    }
+}
 struct Preferences: Codable, Equatable {
     var version = 1
     var shortcut = Shortcut()
     var pickerSize = PickerSize.large
+    var pickerDimensions: PickerDimensions?
+    var resolvedPickerDimensions: PickerDimensions { (pickerDimensions ?? PickerDimensions(width:480,height:424)).constrained }
     var onboarded = false
     var launchAtLogin = false
     var appearance: String?

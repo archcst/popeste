@@ -33,6 +33,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         return [("all",tr("全部")),("recent",tr("最近使用"))] + names.map { ("tag:"+$0.lowercased(), $0) }
     }
     private var parts: [(NSView, CGRect)] = []
+    private var trailingParts = Set<ObjectIdentifier>()
+    private var dialogParts = Set<ObjectIdentifier>()
     private var page = "list", query = ""
     private var expanded = false, selected = 0, recording = false
     private var editing: [String: Any]?
@@ -85,7 +87,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         editor.autoresizingMask = [.width]; editor.textContainer?.widthTracksTextView = true
         editor.route = { [weak self] in self?.handleKey($0) ?? false }
         editor.modeChanged = { [weak self] in self?.updateMeta() }
-        scroll.drawsBackground = false; scroll.borderType = .noBorder; scroll.hasVerticalScroller = true; scroll.autohidesScrollers = true
+        scroll.drawsBackground = false; scroll.borderType = .noBorder; scroll.hasVerticalScroller = false; scroll.hasHorizontalScroller = false
     }
     private func emit(_ name: String, _ payload: [String: Any] = [:]) { action?(name,payload) }
     private func applyState() {
@@ -97,7 +99,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         editor.vimEnabled = page == "editor" && state["vimEditing"] as? Bool == true
         render()
     }
-    private func sync() { emit("layout",["page":page,"collapsed":page == "list" && !expanded]) }
+    private func sync() { emit("layout",["page":page,"collapsed":page == "list" && !expanded,"minimumHeight":CGFloat(page != "list" ? 424 : editingTag != nil ? 360 : 196)]) }
     func focus() { view.window?.makeFirstResponder(page == "list" ? search : page == "editor" ? editor : view) }
     func open(_ destination: String = "resume") {
         if dialog != nil && destination != "resume" { return }
@@ -234,7 +236,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             if key == "s", page == "editor" { save(); return true }
         }
         if page == "editor", editor.vimEnabled && !editor.normal && event.keyCode == 53 { return false }
-        if event.keyCode == 53 { if page == "list" { emit("dismiss") } else { navigate { self.show("list") } }; return true }
+        if event.keyCode == 53 { if page == "list" { emit("dismiss",["explicit":true]) } else { navigate { self.show("list") } }; return true }
+        if (flags == .control || flags == .command) && event.keyCode == 36 && (page == "list" || page == "preview") { insert(continuous:true); return true }
         if page == "preview" {
             if nav(event,"back") { show("list"); return true }
             if event.keyCode == 36 { insert(); return true }
@@ -252,7 +255,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         }
         return false
     }
-    private func insert() { if let id = chosen?["id"] { emit("insert",["id":id]) } }
+    private func insert(continuous: Bool = false) { if let id = chosen?["id"] { emit("insert",["id":id,"continuous":continuous]) } }
     private func closeDialog() { guard !saving else { return }; dialog = nil; leaveAction = nil; afterSave = nil; render(); focus() }
     private func acceptDialog() {
         if dialog == "unsaved" { afterSave = leaveAction; save() }
@@ -261,6 +264,12 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     @discardableResult private func add(_ child: NSView, _ rect: CGRect) -> NSView { child.setAccessibilityHidden(false); view.addSubview(child); parts.append((child,rect)); return child }
     @discardableResult private func label(_ text: String, _ rect: CGRect, size: CGFloat = 13, muted: Bool = false, align: NSTextAlignment = .left) -> NSTextField {
         let field = NativeLabel(labelWithString:text); field.font = .systemFont(ofSize:size*s); field.textColor = muted ? InterfacePalette.muted : InterfacePalette.ink; field.alignment = align
+        if text.contains("↵") {
+            let value = KeyHintText.attributed(text,font:field.font!,color:field.textColor!)
+            let paragraph = NSMutableParagraphStyle(); paragraph.alignment = align; paragraph.lineBreakMode = .byClipping
+            value.addAttribute(.paragraphStyle,value:paragraph,range:NSRange(location:0,length:value.length))
+            field.maximumNumberOfLines = 1; field.attributedStringValue = value
+        }
         add(field,rect); return field
     }
     @discardableResult private func button(_ title: String, _ rect: CGRect, symbol: String? = nil, primary: Bool = false, muted: Bool = false, run: @escaping () -> Void) -> NativeButton {
@@ -268,6 +277,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     }
     private func separator(_ y: CGFloat) { let line = NSView(); line.wantsLayer = true; line.layer?.backgroundColor = resolvedColor(InterfacePalette.line); add(line,CGRect(x:0,y:y,width:480,height:1)) }
     private func render() {
+        sync()
         let glass = state["glass"] as? Bool == true
         // Regular supplies contrast through its adaptive material. Clear keeps its backing.
         let clearGlass = state["glassStyle"] as? String != "regular"
@@ -278,7 +288,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let searchFocused = responder === search || (search.currentEditor() != nil && responder === search.currentEditor())
         let searchSelection = (search.currentEditor() as? NSTextView)?.selectedRange()
         let offset = scroll.contentView.bounds.origin
-        parts.removeAll(); view.subviews.forEach { $0.removeFromSuperview() }; meta = nil; saveState = nil; modeLabel = nil
+        parts.removeAll(); trailingParts.removeAll(); dialogParts.removeAll(); view.subviews.forEach { $0.removeFromSuperview() }; meta = nil; saveState = nil; modeLabel = nil
         if page == "list" {
             let searchIcon = CompactIconView(); add(searchIcon,CGRect(x:17,y:19.72,width:17,height:17))
             search.font = .systemFont(ofSize:17*s); search.textColor = InterfacePalette.ink
@@ -286,18 +296,19 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             let expandText = (navLabel("down").isEmpty ? "↵" : navLabel("down"))+" "+tr("展开")
             let hint = NativeLabel(labelWithString:expandText)
             hint.font = .systemFont(ofSize:12*s); hint.textColor = InterfacePalette.muted
+            if expandText.contains("↵") { hint.attributedStringValue = KeyHintText.attributed(expandText,font:hint.font!,color:hint.textColor!) }
             hint.alignment = .right; hint.maximumNumberOfLines = 1
             // Measure the native field at its actual font size, including cell insets.
             let hintWidth = ceil(hint.intrinsicContentSize.width+2)/s
             let searchHeight = (search.cell?.cellSize.height ?? 20*s)/s
-            add(search,CGRect(x:43,y:28.22-searchHeight/2,width:expanded ? 422 : 411-hintWidth,height:searchHeight))
-            if !expanded { add(hint,CGRect(x:463-hintWidth,y:13.72,width:hintWidth,height:29)) }
+            add(search,CGRect(x:43,y:28.22-searchHeight/2,width:expanded ? 422 : 375-hintWidth,height:searchHeight))
+            if !expanded { add(hint,CGRect(x:427-hintWidth,y:13.72,width:hintWidth,height:29)) }
             else {
                 separator(56); renderTabs(); scroll.documentView = rows; add(scroll,CGRect(x:7,y:104,width:466,height:274))
                 separator(379)
                 button(tr("新建短语"),CGRect(x:12,y:387.27,width:29,height:29),symbol:"plus",muted:true) { [weak self] in self?.edit(nil) }
                 countLabel = label("\(matches.count)"+(AppText.language() == "en" && matches.count == 1 ? " item" : tr(" 条")),CGRect(x:47,y:387,width:80,height:29),size:10,muted:true)
-                label(tr("⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入"),CGRect(x:108,y:387.27,width:264,height:29),size:10,muted:true,align:.center)
+                label(tr("⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入"),CGRect(x:108,y:387.27,width:264,height:29),size:10,muted:true,align:.center)
                 button(tr("设置"),CGRect(x:439,y:387.27,width:29,height:29),symbol:"slider.horizontal.3",muted:true) { [weak self] in self?.show("settings") }
             }
             renderRows()
@@ -317,9 +328,6 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
                 scroll.documentView = editor; add(scroll,CGRect(x:18,y:page == "editor" ? 112 : 72,width:444,height:page == "editor" ? 235.1 : 275.1))
                 if page == "editor" {
                     renderEditorTags()
-                    let pinWidth = textWidth(tr("置顶"),size:11)+30
-                    let pin = button(tr("置顶"),CGRect(x:463-pinWidth,y:15.44,width:pinWidth,height:25.56)) { [weak self] in guard let self else { return }; self.pinned.toggle(); self.updateDraft(); self.render() }
-                    pin.font = .systemFont(ofSize:11*s); pin.leadingSymbol = "pin"; pin.symbolGap = 5; pin.selected = pinned
                     meta = label("",CGRect(x:18,y:355.1,width:110,height:13.89),size:10,muted:true)
                     modeLabel = label("",CGRect(x:26+textWidth("\(editor.string.count)"+tr(" 字符"),size:10),y:355.1,width:224,height:13.89),size:10,muted:true)
                     saveState = label("",CGRect(x:357,y:355.1,width:105,height:13.89),size:10,muted:true,align:.right); updateMeta()
@@ -339,9 +347,26 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
                 }
             }
         }
+        // Reserve the trailing footer control for the window pin on every page.
+        if expanded || page != "list" {
+            for index in parts.indices where parts[index].1.minY >= 379 && parts[index].1.minX >= 394 {
+                parts[index].1.origin.x -= 36
+                trailingParts.insert(ObjectIdentifier(parts[index].0))
+            }
+        }
+        let windowPinned = state["windowPinned"] as? Bool == true
+        let pinTitle = tr(windowPinned ? "取消固定窗口" : "固定窗口")
+        let windowPin = button(pinTitle,CGRect(x:439,y:page == "list" && !expanded ? 13.72 : 387.27,width:29,height:29),symbol:windowPinned ? "pin" : "pin.slash",muted:!windowPinned) { [weak self] in self?.emit("toggleWindowPin") }
+        windowPin.selected = windowPinned
+        windowPin.toolTip = pinTitle
+        windowPin.setAccessibilityValue(windowPinned ? 1 : 0)
         if settingMenu != nil { renderSettingMenu() }
         if editingTag != nil { renderTagEditor() }
-        if dialog != nil { renderDialog() }
+        if dialog != nil {
+            let start = parts.count
+            renderDialog()
+            for (child,rect) in parts[start...] where rect.height < 424 { dialogParts.insert(ObjectIdentifier(child)) }
+        }
         layout(); scroll.contentView.scroll(to:offset)
         if dialog == nil {
             if searchFocused && page == "list" {
@@ -352,13 +377,27 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         view.needsDisplay = true
     }
     private func layout() {
-        // The same logical geometry is scaled in all three window sizes.
-        let missing = max(0,424-view.bounds.height/s)
+        let dw = view.bounds.width/s-480
+        let dh = view.bounds.height/s-424
         for (child,source) in parts {
             var r = source
-            if expanded || page != "list" {
-                if r.minY >= 355 { r.origin.y -= missing }
-                if child === scroll { r.size.height = max(40,r.height-missing) }
+            let id = ObjectIdentifier(child)
+            if source.width == 480 && source.height == 424 {
+                r.size = CGSize(width:view.bounds.width/s,height:view.bounds.height/s)
+            } else if dialogParts.contains(id) {
+                r.origin.x += dw/2; r.origin.y += dh/2
+            } else {
+                if child === search || source.width >= 400 {
+                    r.size.width = max(1,r.width+dw)
+                } else if child is GlassSurface || (child as? NSTextField)?.alignment == .center {
+                    r.origin.x += dw/2
+                } else if trailingParts.contains(id) || source.minX >= 300 || source.maxX >= 450 {
+                    r.origin.x += dw
+                }
+                if expanded || page != "list" {
+                    if r.minY >= (page == "settings" ? 379 : 355) { r.origin.y += dh }
+                    if child === scroll { r.size.height = max(40,r.height+dh) }
+                }
             }
             let frame = CGRect(x:r.minX*s,y:r.minY*s,width:r.width*s,height:r.height*s)
             child.frame = child === search ? view.backingAlignedRect(frame,options:.alignAllEdgesNearest) : frame
@@ -586,18 +625,18 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         if page != "list" { return }
         if expanded && scroll.superview == nil { render(); return }
         selected = max(0,min(selected,matches.count-1)); rows.subviews.forEach { $0.removeFromSuperview() }
-        rows.frame = CGRect(x:0,y:0,width:466*s,height:max(scroll.contentSize.height,CGFloat(matches.count)*46*s))
+        rows.frame = CGRect(x:0,y:0,width:scroll.contentSize.width,height:max(scroll.contentSize.height,CGFloat(matches.count)*46*s))
         for (i,p) in matches.enumerated() {
             let row = NativeRow(body:p["body"] as? String ?? "",tags:p["tags"] as? [String] ?? [],tagColors:state["tagColors"] as? [String:String] ?? [:],selected:i == selected,scale:s) { [weak self] in self?.selected = i; self?.edit(p) }
             row.glass = state["glass"] as? Bool == true
-            row.frame = CGRect(x:0,y:CGFloat(i)*46*s,width:466*s,height:46*s)
+            row.frame = CGRect(x:0,y:CGFloat(i)*46*s,width:scroll.contentSize.width,height:46*s)
             row.choose = { [weak self] in self?.selected = i; self?.renderRows(); self?.focus() }
             row.insert = { [weak self] in self?.emit("insert",["id":p["id"] ?? ""]) }
             rows.addSubview(row)
         }
         countLabel?.stringValue = "\(matches.count)"+(AppText.language() == "en" && matches.count == 1 ? " item" : tr(" 条"))
         if matches.isEmpty {
-            let field = NativeLabel(labelWithString:tr(prompts.isEmpty ? "还没有短语" : "没有匹配的短语")); field.font = .systemFont(ofSize:14*s); field.textColor = .secondaryLabelColor; field.alignment = .center; field.frame = CGRect(x:0,y:76*s,width:466*s,height:24*s); rows.addSubview(field)
+            let field = NativeLabel(labelWithString:tr(prompts.isEmpty ? "还没有短语" : "没有匹配的短语")); field.font = .systemFont(ofSize:14*s); field.textColor = .secondaryLabelColor; field.alignment = .center; field.frame = CGRect(x:0,y:76*s,width:scroll.contentSize.width,height:24*s); rows.addSubview(field)
         }
         if expanded { rows.scrollToVisible(CGRect(x:0,y:CGFloat(selected)*46*s,width:1,height:46*s)) }
     }
@@ -635,6 +674,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let recorder = button(shortcutTitle,CGRect(x:462-keyWidth-12-shortcutWidth,y:settingsControlY(row:rowY("快捷键方案"),height:27),width:shortcutWidth,height:27)) { [weak self] in
             self?.recording = true; self?.emit("recording",["enabled":true]); self?.render(); self?.view.window?.makeFirstResponder(self?.view)
         }
+        trailingParts.insert(ObjectIdentifier(recorder))
         recorder.font = .systemFont(ofSize:12*s); recorder.outline = InterfacePalette.line; recorder.cornerSize = 7*s; recorder.inkColor = InterfacePalette.ink
         select("navigationSchemes",options:keyOptions,y:rowY("快捷键方案"),multiple:true)
         toggle("vimEditing",y:rowY("Vim 编辑模式"),value:state["vimEditing"] as? Bool ?? false)
@@ -722,11 +762,13 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         add(shield,CGRect(x:0,y:0,width:480,height:424))
         let width = min(374,max(138,(menu.options.map { textWidth(tr($0.1),size:12)+46 }.max() ?? 138)))
         let height = min(230,CGFloat(menu.options.count)*30+8)
+        shield.frame = view.bounds
         let box = Surface(); box.fill = InterfacePalette.paper; box.border = InterfacePalette.line; box.radius = 9*s
-        box.frame = CGRect(x:(462-width)*s,y:(menu.y+36)*s,width:width*s,height:height*s)
+        box.autoresizingMask = [.minXMargin]
+        box.frame = CGRect(x:view.bounds.width-(18+width)*s,y:(menu.y+36)*s,width:width*s,height:height*s)
         box.wantsLayer = true; box.layer?.shadowOpacity = 0.12; box.layer?.shadowRadius = 10*s; box.layer?.shadowOffset = CGSize(width:0,height:-3*s)
         shield.addSubview(box)
-        let menuScroll = NSScrollView(frame:box.bounds.insetBy(dx:4*s,dy:4*s)); menuScroll.drawsBackground = false; menuScroll.hasVerticalScroller = true; menuScroll.autohidesScrollers = true
+        let menuScroll = NSScrollView(frame:box.bounds.insetBy(dx:4*s,dy:4*s)); menuScroll.drawsBackground = false; menuScroll.hasVerticalScroller = false; menuScroll.hasHorizontalScroller = false
         let list = Surface(frame:CGRect(x:0,y:0,width:(width-8)*s,height:CGFloat(menu.options.count)*30*s)); list.fill = InterfacePalette.paper
         let values = menu.multiple ? schemes : [state[menu.name] as? String ?? "system"]
         for (i,option) in menu.options.enumerated() {

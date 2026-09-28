@@ -7,12 +7,14 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:flags,timestamp:0,windowNumber:0,context:nil,characters:chars,charactersIgnoringModifiers:chars,isARepeat:false,keyCode:code)!
     }
     static func main() {
-        assert(RowMarquee.offset(elapsed: 0.01, overflow: 360, scale: 1) > 0)
-        assert(abs(RowMarquee.offset(elapsed: 3.75, overflow: 360, scale: 1) - 180) < 0.001)
+        assert(RowMarquee.offset(elapsed: 0.49, overflow: 360, scale: 1) == 0)
+        assert(RowMarquee.offset(elapsed: 0.5, overflow: 360, scale: 1) == 0)
+        assert(RowMarquee.offset(elapsed: 0.51, overflow: 360, scale: 1) > 0)
+        assert(abs(RowMarquee.offset(elapsed: 4.25, overflow: 360, scale: 1) - 180) < 0.001)
         assert(RowMarquee.offset(elapsed: 8, overflow: 360, scale: 1) == 360)
-        assert(RowMarquee.offset(elapsed: 9.5, overflow: 360, scale: 1) == 0)
+        assert(RowMarquee.offset(elapsed: 10, overflow: 360, scale: 1) == 0)
         assert(RowMarquee.offset(elapsed: 5, overflow: 0, scale: 1) == 0)
-        assert(abs(RowMarquee.offset(elapsed: 3.75, overflow: 180, scale: 0.5) - 90) < 0.001)
+        assert(abs(RowMarquee.offset(elapsed: 4.25, overflow: 180, scale: 0.5) - 90) < 0.001)
         let editorBounds = CGRect(x: 200, y: 400, width: 600, height: 100)
         let emptyCaret = Insertion.normalizedInsertionBounds(editorBounds, range: CFRange(location: 0, length: 0), empty: true)
         assert(emptyCaret == CGRect(x: 200, y: 400, width: 0, height: 22))
@@ -348,6 +350,53 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         hiddenUI.action = { name,payload in if name == "updateTag" { savedVisibility = payload["visible"] as? Bool } }
         _ = hiddenUI.handleKey(key("",code:36))
         assert(savedVisibility == true)
+
+        let keyUI = NativeInterface(mode:"list")
+        keyUI.state = ["scale":1.0,"windowPinned":true,"expandOnShow":true,"prompts":[["id":"keys","body":"Keyboard fixture"]]]
+        keyUI.open("list")
+        var keyAction = ""
+        var keyPayload: [String:Any] = [:]
+        keyUI.action = { name,payload in keyAction = name; keyPayload = payload }
+        assert(keyUI.handleKey(key("\r",code:36,flags:.control)))
+        assert(keyAction == "insert" && keyPayload["continuous"] as? Bool == true)
+        assert(keyUI.handleKey(key("\r",code:36,flags:.command)))
+        assert(keyAction == "insert" && keyPayload["continuous"] as? Bool == true)
+        assert(keyUI.handleKey(key("\r",code:36)))
+        assert(keyAction == "insert" && keyPayload["continuous"] as? Bool == false)
+        assert(keyUI.handleKey(key("",code:53)))
+        assert(keyAction == "dismiss" && keyPayload["explicit"] as? Bool == true)
+        let resizeUI = NativeInterface(mode:"list")
+        resizeUI.state = ["scale":1.0,"expandOnShow":true,"prompts":[["id":"sizing","body":"Resize fixture","tags":["Test"]]]]
+        resizeUI.open("list")
+        resizeUI.view.frame = NSRect(x:0,y:0,width:720,height:640)
+        resizeUI.view.layoutSubtreeIfNeeded()
+        let sizedSearch = descendants(resizeUI.view).compactMap { $0 as? NativeSearch }.first!
+        assert(sizedSearch.font!.pointSize == 17 && sizedSearch.frame.width == 662)
+        let sizedRow = descendants(resizeUI.view).compactMap { $0 as? NativeRow }.first!
+        assert(sizedRow.frame.width == 706)
+        let settingsButton = descendants(resizeUI.view).compactMap { $0 as? NativeButton }.first { $0.symbol == "slider.horizontal.3" }!
+        assert(settingsButton.frame.maxX == 672 && abs(settingsButton.frame.maxY-632.27) < 0.01)
+        resizeUI.view.frame.size.height = 196
+        resizeUI.view.layoutSubtreeIfNeeded()
+        assert(sizedRow.enclosingScrollView!.frame.height == 46)
+        assert(settingsButton.frame.maxY < 196)
+        resizeUI.view.frame.size.height = 640
+        let windowPin = descendants(resizeUI.view).compactMap { $0 as? NativeButton }.first { $0.symbol == "pin.slash" }!
+        assert(windowPin.frame.minX > settingsButton.frame.maxX)
+        var didTogglePin = false
+        resizeUI.action = { name,_ in if name == "toggleWindowPin" { didTogglePin = true } }
+        windowPin.performClick(nil); assert(didTogglePin)
+        resizeUI.state["windowPinned"] = true
+        resizeUI.open("edit"); resizeUI.view.layoutSubtreeIfNeeded()
+        let pinnedButtons = descendants(resizeUI.view).compactMap { $0 as? NativeButton }.filter { $0.symbol == "pin" }
+        assert(pinnedButtons.count == 1 && pinnedButtons[0].selected)
+        assert(!descendants(resizeUI.view).compactMap { $0 as? NativeButton }.contains { $0.leadingSymbol == "pin" })
+        let sizedEditor = descendants(resizeUI.view).compactMap { $0 as? NativeEditor }.first!
+        assert(sizedEditor.font!.pointSize == 17 && sizedEditor.enclosingScrollView!.frame.width == 684)
+        descendants(resizeUI.view).compactMap { $0 as? NativeTagPill }.first!.editButton.performClick(nil)
+        let sizedPopup = resizeUI.view.subviews.compactMap { $0 as? GlassSurface }.first!
+        assert(sizedPopup.frame.midX == resizeUI.view.bounds.midX)
+        assert(sizedPopup.frame.width == 360)
 
         let savedLanguage = AppText.language
         for language in Preferences.supportedLanguages {

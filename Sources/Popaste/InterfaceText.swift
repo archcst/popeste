@@ -4,6 +4,10 @@ import Foundation
 enum InterfaceText {
     static let translations: [String: [String: String]] = [
 "en": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N New  ·  ⌘E Edit  ·  ↵ Insert  ·  ⌘↵ Repeat",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N New  ·  ⌘E Edit  ·  ⌃↵ Keep inserting",
+"固定窗口": "Pin window",
+"取消固定窗口": "Unpin window",
 "在顶部显示": "Show in top bar",
 "呼出时展开": "Expand on open",
 "全部": "All",
@@ -87,6 +91,10 @@ enum InterfaceText {
 "插入": "Insert"
 ],
 "zh-Hant": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入  ·  ⌘↵ 連續插入",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N 新增  ·  ⌘E 編輯  ·  ⌃↵ 連續插入",
+"固定窗口": "固定視窗",
+"取消固定窗口": "取消固定視窗",
 "在顶部显示": "在頂部顯示",
 "呼出时展开": "叫出時展開",
 "全部": "全部",
@@ -171,6 +179,10 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新增  ·  ⌘E 編輯  ·  ↵ 插入"
 ],
 "ja": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入  ·  ⌘↵ 連続挿入",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N 新規  ·  ⌘E 編集  ·  ⌃↵ 連続挿入",
+"固定窗口": "ウインドウを固定",
+"取消固定窗口": "ウインドウの固定を解除",
 "在顶部显示": "上部に表示",
 "呼出时展开": "表示時に展開",
 "全部": "すべて",
@@ -255,6 +267,10 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 新規  ·  ⌘E 編集  ·  ↵ 挿入"
 ],
 "ko": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입  ·  ⌘↵ 연속 삽입",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ⌃↵ 연속 삽입",
+"固定窗口": "창 고정",
+"取消固定窗口": "창 고정 해제",
 "在顶部显示": "상단에 표시",
 "呼出时展开": "열 때 펼치기",
 "全部": "전체",
@@ -339,6 +355,10 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N 새로 만들기  ·  ⌘E 편집  ·  ↵ 삽입"
 ],
 "fr": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N Créer  ·  ⌘E Modifier  ·  ↵ Insérer  ·  ⌘↵ Répéter",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ⌃↵ Insérer en continu",
+"固定窗口": "Épingler la fenêtre",
+"取消固定窗口": "Détacher la fenêtre",
 "在顶部显示": "Afficher en haut",
 "呼出时展开": "Développer à l’ouverture",
 "全部": "Tous",
@@ -423,6 +443,10 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Nouveau  ·  ⌘E Modifier  ·  ↵ Insérer"
 ],
 "de": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N Neu  ·  ⌘E Ändern  ·  ↵ Einfügen  ·  ⌘↵ Weiter",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ⌃↵ Weiter einfügen",
+"固定窗口": "Fenster anheften",
+"取消固定窗口": "Fenster lösen",
 "在顶部显示": "Oben anzeigen",
 "呼出时展开": "Beim Öffnen ausklappen",
 "全部": "Alle",
@@ -507,6 +531,10 @@ enum InterfaceText {
 "⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入": "⌘N Neu  ·  ⌘E Bearbeiten  ·  ↵ Einfügen"
 ],
 "es": [
+"⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入": "⌘N Nuevo  ·  ⌘E Editar  ·  ↵ Insertar  ·  ⌘↵ Repetir",
+"⌘N 新建  ·  ⌘E 编辑  ·  ⌃↵ 连续插入": "⌘N Nuevo  ·  ⌘E Editar  ·  ⌃↵ Seguir insertando",
+"固定窗口": "Fijar ventana",
+"取消固定窗口": "Desfijar ventana",
 "在顶部显示": "Mostrar arriba",
 "呼出时展开": "Expandir al abrir",
 "全部": "Todo",

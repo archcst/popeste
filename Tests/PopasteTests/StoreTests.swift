@@ -131,6 +131,10 @@ final class StoreTests {
             try config.update { $0.navigationSchemes = schemes }
             XCTAssertEqual(try Configuration(directory: destination, legacy: defaults).value.resolvedNavigationSchemes, schemes)
         }
+        XCTAssertEqual(config.value.resolvedPickerDimensions,PickerDimensions(width:480,height:424))
+        try config.update { $0.pickerDimensions = PickerDimensions(width:720,height:640) }
+        XCTAssertEqual(try Configuration(directory:destination,legacy:defaults).value.resolvedPickerDimensions,PickerDimensions(width:720,height:640))
+        XCTAssertEqual(PickerDimensions(width:100,height:100).constrained,PickerDimensions(width:480,height:196))
         XCTAssertEqual(config.value.expandOnShow ?? false, false)
         for expanded in [true,false] {
             try config.update { $0.expandOnShow = expanded }

@@ -4,6 +4,9 @@ import ApplicationServices
 final class Insertion {
     private(set) var target: NSRunningApplication?
     private var focused: AXUIElement?
+    private var savedClipboard: [[(NSPasteboard.PasteboardType, Data)]]?
+    private var clipboardGeneration: Int?
+    private var clipboardRestore: DispatchWorkItem?
     func capture() -> NSRect? {
         target = NSWorkspace.shared.frontmostApplication; focused = nil
         guard AXIsProcessTrusted(), let target else { return nil }
@@ -94,13 +97,14 @@ final class Insertion {
         return CGRect(x: rect.minX, y: rect.minY, width: 0, height: 22)
     }
     func restore() { if let target, !target.isTerminated { target.activate(options: [.activateIgnoringOtherApps]) } }
-    func paste(_ text: String, completion: @escaping (Bool) -> Void) {
+    func paste(_ text: String, keepingFocus: Bool = false, completion: @escaping (Bool) -> Void) {
         guard AXIsProcessTrusted(), let target, !target.isTerminated,
               target.processIdentifier != ProcessInfo.processInfo.processIdentifier else { completion(false); return }
-        restore()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+        let focused = self.focused
+        if !keepingFocus { restore() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + (keepingFocus ? 0 : 0.16)) {
             guard NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier else { completion(false); return }
-            if let focused = self.focused {
+            if let focused {
                 var current: CFTypeRef?
                 let app = AXUIElementCreateApplication(target.processIdentifier)
                 guard AXUIElementCopyAttributeValue(app, kAXFocusedUIElementAttribute as CFString, &current) == .success,
@@ -110,21 +114,35 @@ final class Insertion {
                   let down = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: true),
                   let up = CGEvent(keyboardEventSource: source, virtualKey: 9, keyDown: false) else { completion(false); return }
             let board = NSPasteboard.general
-            let saved = board.pasteboardItems?.map { item in item.types.compactMap { type in item.data(forType: type).map { (type, $0) } } } ?? []
+            // Consecutive pastes share the original clipboard until the last restore.
+            if self.clipboardGeneration != board.changeCount || self.savedClipboard == nil {
+                self.savedClipboard = board.pasteboardItems?.map { item in item.types.compactMap { type in item.data(forType: type).map { (type, $0) } } } ?? []
+            }
+            self.clipboardRestore?.cancel()
             board.clearContents(); board.setString(text, forType: .string)
             let generation = board.changeCount
+            self.clipboardGeneration = generation
             down.flags = .maskCommand; up.flags = .maskCommand
-            down.post(tap: .cghidEventTap); up.post(tap: .cghidEventTap)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            if keepingFocus {
+                down.postToPid(target.processIdentifier); up.postToPid(target.processIdentifier)
+            } else {
+                down.post(tap: .cghidEventTap); up.post(tap: .cghidEventTap)
+            }
+            let restore = DispatchWorkItem { [weak self] in
+                guard let self, self.clipboardGeneration == generation else { return }
                 if board.changeCount == generation {
                     board.clearContents()
-                    let items = saved.map { entries -> NSPasteboardItem in
+                    let items = (self.savedClipboard ?? []).map { entries -> NSPasteboardItem in
                         let item = NSPasteboardItem(); for (type, data) in entries { item.setData(data, forType: type) }; return item
                     }
                     if !items.isEmpty { board.writeObjects(items) }
                 }
-                completion(true)
+                self.savedClipboard = nil; self.clipboardGeneration = nil; self.clipboardRestore = nil
             }
+            self.clipboardRestore = restore
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: restore)
+            // Give the target time to read the clipboard; restoring it must not block input.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { completion(true) }
         }
     }
 }

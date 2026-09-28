@@ -21,6 +21,25 @@ final class NativeCanvas: NSView {
     override func keyDown(with event: NSEvent) { if keyHandler?(event) != true { super.keyDown(with: event) } }
 }
 /// Let AppKit draw labels within the inherited glass appearance.
+enum KeyHintText {
+    static func attributed(_ text: String, font: NSFont, color: NSColor) -> NSMutableAttributedString {
+        let result = NSMutableAttributedString(string:text,attributes:[.font:font,.foregroundColor:color])
+        guard let image = NSImage(systemSymbolName:"return",accessibilityDescription:"Return")?
+            .withSymbolConfiguration(.init(pointSize:font.pointSize,weight:.regular))?
+            .withSymbolConfiguration(.init(paletteColors:[color])) else { return result }
+        let source = text as NSString
+        for index in (0..<source.length).reversed() where source.character(at:index) == 0x21B5 {
+            let attachment = NSTextAttachment()
+            attachment.image = image
+            let height = font.pointSize
+            attachment.bounds = CGRect(x:0,y:(font.capHeight-height)/2,width:height*image.size.width/image.size.height,height:height)
+            result.replaceCharacters(in:NSRange(location:index,length:1),with:NSAttributedString(attachment:attachment))
+        }
+        result.addAttributes([.font:font,.foregroundColor:color],range:NSRange(location:0,length:result.length))
+        return result
+    }
+}
+
 final class NativeLabel: NSTextField {
     override class var cellClass: AnyClass? { get { CenteredLabelCell.self } set {} }
 }
@@ -104,7 +123,7 @@ final class NativeButton: NSButton {
         if let symbol {
             drawSymbol(symbol,size:iconSize*scale,center:NSPoint(x:bounds.midX,y:bounds.midY))
         } else {
-            let text = NSMutableAttributedString(string:title,attributes:[.font:font ?? NSFont.systemFont(ofSize:13),.foregroundColor:isEnabled ? color : color.withAlphaComponent(0.35)])
+            let text = KeyHintText.attributed(title,font:font ?? .systemFont(ofSize:13),color:isEnabled ? color : color.withAlphaComponent(0.35))
             let nsTitle = title as NSString
             var start = 0
             while start < nsTitle.length {
@@ -132,8 +151,8 @@ enum RowMarquee {
     static func offset(elapsed: TimeInterval, overflow: CGFloat, scale: CGFloat) -> CGFloat {
         guard overflow > 0, scale > 0 else { return 0 }
         let duration = Double(overflow / (48 * scale))
-        let phase = max(0, elapsed).truncatingRemainder(dividingBy: duration + 2)
-        return min(overflow, CGFloat(phase) * 48 * scale)
+        let phase = max(0, elapsed).truncatingRemainder(dividingBy: 0.5 + duration + 2)
+        return min(overflow, CGFloat(max(0, phase - 0.5)) * 48 * scale)
     }
 }
 
