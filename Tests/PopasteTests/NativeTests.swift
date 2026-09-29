@@ -61,6 +61,20 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         ui.call("nativeSaved","fixture")
         assert(ui.view.subviews.contains { $0 is NativeSearch })
         ui.open("list")
+        assert(ui.view.subviews.compactMap { $0 as? NativeSearch }.first!.isHidden)
+        ui.focus()
+        assert(ui.handleKey(key("t",code:17)))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.02))
+        let firstInput = ui.view.subviews.compactMap { $0 as? NativeSearch }.first!
+        assert(!firstInput.isHidden && firstInput.stringValue == "t")
+        let searchBox = ui.view.subviews.compactMap { $0 as? Surface }.first { $0.identifier?.rawValue == "inline-search" }!
+        assert(searchBox.border == nil && searchBox.radius == searchBox.frame.height/2 && searchBox.frame.height == 40 && searchBox.frame.minX == 12)
+        assert(searchBox.frame.contains(firstInput.frame))
+        assert(w.firstResponder === firstInput.currentEditor())
+        ui.open("list")
+        assert(firstInput.isHidden)
+        assert(!ui.view.subviews.contains { $0.identifier?.rawValue == "inline-search" })
+        assert(ui.handleKey(key("f",flags:.command)))
         let search = ui.view.subviews.compactMap { $0 as? NativeSearch }.first!
         RunLoop.current.run(until:Date().addingTimeInterval(0.02))
         w.makeFirstResponder(search); search.stringValue = "no matching fixture"
@@ -156,7 +170,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
             assert(glass.contentView?.subviews.contains { ($0 as? NativeButton)?.title == "L" } == true)
             selector.removeFromSuperview()
         }
-        // Both list entry points honor the persisted opening preference.
+        // List entry points show candidates with search hidden, including legacy preferences.
         let openingUI = NativeInterface(mode:"list")
         var openingCollapsed = false
         openingUI.action = { name,payload in if name == "layout" { openingCollapsed = payload["collapsed"] as? Bool ?? false } }
@@ -164,7 +178,8 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
             openingUI.state = ["expandOnShow":preference,"prompts":[]]
             for destination in ["list","resume"] {
                 openingUI.open(destination)
-                assert(openingCollapsed == !preference)
+                assert(!openingCollapsed)
+                assert(openingUI.view.subviews.compactMap { $0 as? NativeSearch }.first!.isHidden)
             }
         }
         let horizontalTags = TagScrollView(frame:NSRect(x:0,y:0,width:200,height:30))
@@ -208,6 +223,8 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         let workTab = descendants(tagUI.view).compactMap { $0 as? NativeTagPill }.first { $0.name == "Work" }!
         workTab.layoutSubtreeIfNeeded()
         let pillFrame = workTab.frame
+        assert(workTab.field.alignment == .center)
+        assert(workTab.field.frame.midX == workTab.bounds.midX && workTab.field.frame.midY == workTab.bounds.midY)
         let glyphFrame = workTab.field.frame
         workTab.mouseEntered(with:key(""))
         RunLoop.current.run(until:Date().addingTimeInterval(0.08))
@@ -352,6 +369,8 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         assert(savedVisibility == true)
 
         let keyUI = NativeInterface(mode:"list")
+        let keyWindow = NSWindow(contentRect:NSRect(x:0,y:0,width:480,height:424),styleMask:.borderless,backing:.buffered,defer:false)
+        keyWindow.contentView = keyUI.view
         keyUI.state = ["scale":1.0,"windowPinned":true,"expandOnShow":true,"prompts":[["id":"keys","body":"Keyboard fixture"]]]
         keyUI.open("list")
         var keyAction = ""
@@ -365,13 +384,26 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         assert(keyAction == "insert" && keyPayload["continuous"] as? Bool == false)
         assert(keyUI.handleKey(key("",code:53)))
         assert(keyAction == "dismiss" && keyPayload["explicit"] as? Bool == true)
+        _ = keyUI.handleKey(key("f",flags:.command))
+        let escapeSearch = descendants(keyUI.view).compactMap { $0 as? NativeSearch }.first!
+        escapeSearch.stringValue = "missing query"
+        escapeSearch.currentEditor()?.string = "missing query"
+        keyUI.controlTextDidChange(Notification(name:NSControl.textDidChangeNotification,object:escapeSearch))
+        RunLoop.current.run(until:Date().addingTimeInterval(0.02))
+        var dismissed = false
+        keyUI.action = { name,_ in if name == "dismiss" { dismissed = true } }
+        assert(keyUI.handleKey(key("",code:53)))
+        assert(!dismissed && escapeSearch.isHidden && escapeSearch.stringValue.isEmpty)
+        assert(descendants(keyUI.view).compactMap { $0 as? NativeRow }.count == 1)
+        assert(keyUI.handleKey(key("",code:53)) && dismissed)
         let resizeUI = NativeInterface(mode:"list")
         resizeUI.state = ["scale":1.0,"expandOnShow":true,"prompts":[["id":"sizing","body":"Resize fixture","tags":["Test"]]]]
         resizeUI.open("list")
+        _ = resizeUI.handleKey(key("f",flags:.command))
         resizeUI.view.frame = NSRect(x:0,y:0,width:720,height:640)
         resizeUI.view.layoutSubtreeIfNeeded()
         let sizedSearch = descendants(resizeUI.view).compactMap { $0 as? NativeSearch }.first!
-        assert(sizedSearch.font!.pointSize == 17 && sizedSearch.frame.width == 662)
+        assert(sizedSearch.font!.pointSize == 17 && sizedSearch.frame.width == 648)
         let sizedRow = descendants(resizeUI.view).compactMap { $0 as? NativeRow }.first!
         assert(sizedRow.frame.width == 706)
         let settingsButton = descendants(resizeUI.view).compactMap { $0 as? NativeButton }.first { $0.symbol == "slider.horizontal.3" }!
@@ -404,14 +436,13 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
             for scale in [0.8, 0.9, 1.0] {
                 for schemes in [["arrows"], ["emacs"], ["vim"], ["arrows","emacs","vim"], []] {
                     let searchUI = NativeInterface(mode:"list")
-                    searchUI.view.frame = NSRect(x:0,y:0,width:480*scale,height:57*scale)
+                    searchUI.view.frame = NSRect(x:0,y:0,width:480*scale,height:424*scale)
                     searchUI.state = ["scale":scale,"navigationSchemes":schemes,"prompts":[]]
                     searchUI.view.layoutSubtreeIfNeeded()
-                    let hint = searchUI.view.subviews.compactMap { $0 as? NativeLabel }.first!
                     let input = searchUI.view.subviews.compactMap { $0 as? NativeSearch }.first!
-                    assert(hint.frame.width >= hint.intrinsicContentSize.width)
-                    assert(hint.frame.minX > input.frame.maxX)
-                    assert(hint.frame.maxX <= searchUI.view.bounds.width)
+                    assert(input.isHidden)
+                    _ = searchUI.handleKey(key("f",flags:.command))
+                    assert(!input.isHidden && input.frame.maxX <= searchUI.view.bounds.width)
                 }
             }
         }

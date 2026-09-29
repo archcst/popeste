@@ -28,9 +28,9 @@ final class Picker: NSObject, NSWindowDelegate {
     private(set) var windowPinned = false
     private var modal = false
     private var recording = false
-    private var collapsed = true
+    private var collapsed = false
     private var savingWindowSize = false
-    private var minimumExpandedHeight: CGFloat = 196
+    private var minimumExpandedHeight: CGFloat = 140
     private var expansionAnchor = NSRect.zero
     private var currentPage = "list"
     init(store: Store, configuration: Configuration, settings: Settings) {
@@ -85,7 +85,7 @@ final class Picker: NSObject, NSWindowDelegate {
             case "ready", "refresh": reload()
             case "layout":
                 currentPage = payload["page"] as? String ?? "list"
-                minimumExpandedHeight = payload["minimumHeight"] as? CGFloat ?? (currentPage == "list" ? 196 : 424)
+                minimumExpandedHeight = payload["minimumHeight"] as? CGFloat ?? (currentPage == "list" ? 140 : 424)
                 collapsed = currentPage == "list" && payload["collapsed"] as? Bool == true
                 resize()
             case "recording": recording = payload["enabled"] as? Bool ?? false
@@ -135,7 +135,7 @@ final class Picker: NSObject, NSWindowDelegate {
     func show(_ destination: String = "resume") {
         guard !busy, !modal else { return }
         if panel.isVisible { reload(); interface.open(destination); panel.makeKeyAndOrderFront(nil); return }
-        collapsed = (configuration.value.expandOnShow != true) && (destination == "list" || (destination == "resume" && currentPage == "list"))
+        collapsed = false
         let caret = insertion.capture(), mouse = NSEvent.mouseLocation
         let point = caret.map { NSPoint(x: $0.minX, y: $0.minY) } ?? mouse
         let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) ?? NSScreen.main!
@@ -181,7 +181,7 @@ final class Picker: NSObject, NSWindowDelegate {
         let scale = configuration.value.pickerSize.scale
         let old = configuration.value.resolvedPickerDimensions
         let height = panel.frame.height/scale
-        let preserveHeight = collapsed || (minimumExpandedHeight > 196 && old.height < minimumExpandedHeight && height <= minimumExpandedHeight)
+        let preserveHeight = collapsed || (minimumExpandedHeight > 140 && old.height < minimumExpandedHeight && height <= minimumExpandedHeight)
         let size = PickerDimensions(width:panel.frame.width/scale,height:preserveHeight ? old.height : height).constrained
         expansionAnchor = NSRect(x:panel.frame.minX,y:panel.frame.maxY-57*scale,width:panel.frame.width,height:57*scale)
         guard size != old else { return }

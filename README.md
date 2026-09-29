@@ -12,16 +12,16 @@
 
 *Native macOS 26 floating windows with sample phrases, using the app’s glass container and controls. Glass appearance varies with the background and system settings.*
 
-Popeste is a native macOS menu bar utility for the text you type over and over: replies, snippets, notes, and reusable phrases. Bring up the search bar, find an item, and press Return to insert it into your current app.
+Popeste is a native macOS menu bar utility for the text you type over and over: replies, snippets, notes, and reusable phrases. Bring up the picker, find an item, and press Return to insert it into your current app.
 
 No account, cloud service, or network connection required.
 
 ## Features
 
-- **A compact floating picker.** Starts as a search bar and expands when you type or press ↓. Enable **Expand on open** in Settings to show the full picker immediately. Appears above the text cursor when available, with a mouse-position fallback.
+- **A compact floating picker.** Shows tags and phrases immediately, with search hidden until you type. Press ⌘F to open search or ⌘V to paste a query. Appears above the text cursor when available, with a mouse-position fallback.
 - **Your text, preserved.** Store multiline text, indentation, Unicode, and emoji. Search the full body, pin frequent items, and edit in the same window.
 - **Keyboard navigation.** Choose arrow keys, Emacs, Vim, or a combination. Optional Vim editing supports normal/insert modes, visual-line movement, and undo.
-- **Keep the window pinned.** Use the pin beside Settings to keep the window on top across app switches. Esc dismisses it; Return inserts and dismisses; Ctrl+Return inserts while keeping focus for the next phrase. Reopening retains the pin state.
+- **Keep the window pinned.** Use the pin beside Settings to keep the window on top across app switches. Esc clears and hides an open search field; a second Esc dismisses the window. Return inserts and dismisses; Ctrl+Return inserts while keeping focus for the next phrase. Reopening retains the pin state.
 - **Native macOS appearance.** Built with Swift and AppKit. Three UI scales, draggable window edges that resize the content area without changing text size, light/dark appearance, and frosted or liquid glass on macOS 26+.
 - **Local storage.** Phrases and preferences live in `~/.config/popeste`, with atomic writes and protection against overwriting invalid data.
 - **Eight interface languages.** English, Simplified Chinese, Traditional Chinese, Japanese, Korean, French, German, and Spanish. Follows the system language by default.

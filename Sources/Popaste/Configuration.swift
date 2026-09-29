@@ -15,7 +15,7 @@ struct PickerDimensions: Codable, Equatable {
     var height: Double
     var constrained: PickerDimensions {
         PickerDimensions(width:width.isFinite ? max(480,min(1600,width)) : 480,
-                         height:height.isFinite ? max(196,min(1400,height)) : 424)
+                         height:height.isFinite ? max(140,min(1400,height)) : 424)
     }
 }
 struct Preferences: Codable, Equatable {

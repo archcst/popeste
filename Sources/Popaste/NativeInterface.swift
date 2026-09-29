@@ -1,4 +1,5 @@
 import AppKit
+import QuartzCore
 
 /// The panel's entire interface is native AppKit. It shares the existing persistence actions.
 final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
@@ -36,7 +37,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private var trailingParts = Set<ObjectIdentifier>()
     private var dialogParts = Set<ObjectIdentifier>()
     private var page = "list", query = ""
-    private var expanded = false, selected = 0, recording = false
+    private var expanded = true, selected = 0, recording = false
+    private var searchVisible = false
     private var editing: [String: Any]?
     private var pinned = false
     private var dialog: String?
@@ -99,8 +101,8 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         editor.vimEnabled = page == "editor" && state["vimEditing"] as? Bool == true
         render()
     }
-    private func sync() { emit("layout",["page":page,"collapsed":page == "list" && !expanded,"minimumHeight":CGFloat(page != "list" ? 424 : editingTag != nil ? 360 : 196)]) }
-    func focus() { view.window?.makeFirstResponder(page == "list" ? search : page == "editor" ? editor : view) }
+    private func sync() { emit("layout",["page":page,"collapsed":page == "list" && !expanded,"minimumHeight":CGFloat(page != "list" ? 424 : editingTag != nil ? 360 : searchVisible ? 196 : 140)]) }
+    func focus() { view.window?.makeFirstResponder(page == "list" ? (searchVisible ? search : view) : page == "editor" ? editor : view) }
     func open(_ destination: String = "resume") {
         if dialog != nil && destination != "resume" { return }
         if (search.currentEditor() as? NSTextView)?.hasMarkedText() == true || editor.hasMarkedText() { return }
@@ -110,9 +112,9 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         case "new": edit(nil)
         case "edit": if page == "list" || page == "preview", let chosen { edit(chosen) }
         case "settings": navigate { self.show("settings") }
-        case "list": navigate { self.query = ""; self.search.stringValue = ""; self.show("list", expand: self.state["expandOnShow"] as? Bool ?? false) }
+        case "list": navigate { self.query = ""; self.search.stringValue = ""; self.searchVisible = false; self.show("list") }
         default:
-            if page == "list" { query = ""; search.stringValue = ""; selected = 0; expanded = state["expandOnShow"] as? Bool ?? false; sync(); render() }
+            if page == "list" { query = ""; search.stringValue = ""; selected = 0; expanded = true; searchVisible = false; sync(); render() }
         }
         DispatchQueue.main.async { [weak self] in self?.focus() }
     }
@@ -136,7 +138,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
     private func show(_ next: String, expand: Bool = true) {
         if page == "editor" { emit("discard") }
         settingMenu = nil; closeTagColorPicker(); editingTag = nil; tagEditorDrafts.removeAll()
-        page = next; if next == "list" { expanded = expand }
+        page = next; if next == "list" { expanded = true }
         recording = false; emit("recording",["enabled":false]); sync(); render(); focus()
     }
     private func navigate(_ next: @escaping () -> Void) {
@@ -230,13 +232,23 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             recording = false; emit("recording",["enabled":false]); render(); return true
         }
         if flags == .command {
+            if key == "f", page == "list" { revealSearch(); return true }
+            if key == "v", page == "list", !searchVisible { revealSearch(); (search.currentEditor() as? NSTextView)?.paste(nil); return true }
             if key == "n" { edit(nil); return true }
             if key == "," { navigate { self.show("settings") }; return true }
             if key == "e", page == "list" || page == "preview" { if let chosen { edit(chosen) }; return true }
             if key == "s", page == "editor" { save(); return true }
         }
         if page == "editor", editor.vimEnabled && !editor.normal && event.keyCode == 53 { return false }
-        if event.keyCode == 53 { if page == "list" { emit("dismiss",["explicit":true]) } else { navigate { self.show("list") } }; return true }
+        if event.keyCode == 53 {
+            if page == "list", searchVisible {
+                view.window?.makeFirstResponder(view)
+                search.stringValue = ""; query = ""; searchVisible = false; selected = 0
+                render(); focus()
+            } else if page == "list" { emit("dismiss",["explicit":true]) }
+            else { navigate { self.show("list") } }
+            return true
+        }
         if (flags == .control || flags == .command) && event.keyCode == 36 && (page == "list" || page == "preview") { insert(continuous:true); return true }
         if page == "preview" {
             if nav(event,"back") { show("list"); return true }
@@ -253,7 +265,36 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             if event.keyCode == 36 { insert(); return true }
             if flags == [.command,.shift] && key == "c", let body = chosen?["body"] { emit("copy",["body":body]); return true }
         }
+        if page == "list", !searchVisible,
+           flags.intersection([.command,.control]).isEmpty,
+           let characters = event.characters, !characters.isEmpty,
+           characters.unicodeScalars.contains(where: { !CharacterSet.controlCharacters.contains($0) && !(0xF700...0xF8FF).contains($0.value) }) {
+            revealSearch()
+            // Deliver the original key to AppKit's field editor so IME composition and
+            // keyboard layouts work exactly as they do in a visible text field.
+            search.currentEditor()?.keyDown(with:event)
+            return true
+        }
         return false
+    }
+    private func revealSearch() {
+        guard !searchVisible else { return }
+        searchVisible = true; render(); focus()
+        guard view.window?.isVisible == true, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        for (child,rect) in parts where rect.minY < 355 && rect.height < 424 {
+            child.wantsLayer = true
+            guard let layer = child.layer else { continue }
+            let slide = CABasicAnimation(keyPath:"position.y")
+            slide.fromValue = layer.position.y - (rect.minY < 56 ? 8 : 56)*s
+            slide.toValue = layer.position.y
+            slide.duration = 0.1; slide.timingFunction = CAMediaTimingFunction(name:.easeOut)
+            layer.add(slide,forKey:"search-reveal-position")
+            if rect.minY < 56 {
+                let fade = CABasicAnimation(keyPath:"opacity")
+                fade.fromValue = 0; fade.toValue = 1; fade.duration = 0.1
+                layer.add(fade,forKey:"search-reveal-opacity")
+            }
+        }
     }
     private func insert(continuous: Bool = false) { if let id = chosen?["id"] { emit("insert",["id":id,"continuous":continuous]) } }
     private func closeDialog() { guard !saving else { return }; dialog = nil; leaveAction = nil; afterSave = nil; render(); focus() }
@@ -290,27 +331,25 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         let offset = scroll.contentView.bounds.origin
         parts.removeAll(); trailingParts.removeAll(); dialogParts.removeAll(); view.subviews.forEach { $0.removeFromSuperview() }; meta = nil; saveState = nil; modeLabel = nil
         if page == "list" {
-            let searchIcon = CompactIconView(); add(searchIcon,CGRect(x:17,y:19.72,width:17,height:17))
+            if searchVisible {
+                let searchBox = Surface()
+                searchBox.identifier = NSUserInterfaceItemIdentifier("inline-search")
+                searchBox.radius = 20*s
+                searchBox.fill = NSColor.controlBackgroundColor.withAlphaComponent(glass ? 0.35 : 0.8)
+                add(searchBox,CGRect(x:12,y:10,width:456,height:40))
+            }
+            let searchIcon = CompactIconView(); searchIcon.isHidden = !searchVisible; search.isHidden = !searchVisible
+            add(searchIcon,CGRect(x:24,y:22,width:16,height:16))
             search.font = .systemFont(ofSize:17*s); search.textColor = InterfacePalette.ink
             search.placeholderAttributedString = NSAttributedString(string:tr("搜索短语"),attributes:[.font:NSFont.systemFont(ofSize:17*s),.foregroundColor:InterfacePalette.muted])
-            let expandText = (navLabel("down").isEmpty ? "↵" : navLabel("down"))+" "+tr("展开")
-            let hint = NativeLabel(labelWithString:expandText)
-            hint.font = .systemFont(ofSize:12*s); hint.textColor = InterfacePalette.muted
-            if expandText.contains("↵") { hint.attributedStringValue = KeyHintText.attributed(expandText,font:hint.font!,color:hint.textColor!) }
-            hint.alignment = .right; hint.maximumNumberOfLines = 1
-            // Measure the native field at its actual font size, including cell insets.
-            let hintWidth = ceil(hint.intrinsicContentSize.width+2)/s
             let searchHeight = (search.cell?.cellSize.height ?? 20*s)/s
-            add(search,CGRect(x:43,y:28.22-searchHeight/2,width:expanded ? 422 : 375-hintWidth,height:searchHeight))
-            if !expanded { add(hint,CGRect(x:427-hintWidth,y:13.72,width:hintWidth,height:29)) }
-            else {
-                separator(56); renderTabs(); scroll.documentView = rows; add(scroll,CGRect(x:7,y:104,width:466,height:274))
-                separator(379)
-                button(tr("新建短语"),CGRect(x:12,y:387.27,width:29,height:29),symbol:"plus",muted:true) { [weak self] in self?.edit(nil) }
-                countLabel = label("\(matches.count)"+(AppText.language() == "en" && matches.count == 1 ? " item" : tr(" 条")),CGRect(x:47,y:387,width:80,height:29),size:10,muted:true)
-                label(tr("⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入"),CGRect(x:108,y:387.27,width:264,height:29),size:10,muted:true,align:.center)
-                button(tr("设置"),CGRect(x:439,y:387.27,width:29,height:29),symbol:"slider.horizontal.3",muted:true) { [weak self] in self?.show("settings") }
-            }
+            add(search,CGRect(x:48,y:30-searchHeight/2,width:408,height:searchHeight))
+            renderTabs(); scroll.documentView = rows; add(scroll,CGRect(x:7,y:104,width:466,height:274))
+            separator(379)
+            button(tr("新建短语"),CGRect(x:12,y:387.27,width:29,height:29),symbol:"plus",muted:true) { [weak self] in self?.edit(nil) }
+            countLabel = label("\(matches.count)"+(AppText.language() == "en" && matches.count == 1 ? " item" : tr(" 条")),CGRect(x:47,y:387,width:80,height:29),size:10,muted:true)
+            label(tr("⌘N 新建  ·  ⌘E 编辑  ·  ↵ 插入  ·  ⌘↵ 连续插入"),CGRect(x:108,y:387.27,width:264,height:29),size:10,muted:true,align:.center)
+            button(tr("设置"),CGRect(x:439,y:387.27,width:29,height:29),symbol:"slider.horizontal.3",muted:true) { [weak self] in self?.show("settings") }
             renderRows()
         } else {
             button(tr("返回"),CGRect(x:17,y:13.72,width:29,height:29),symbol:"arrow.left",muted:true) { [weak self] in self?.navigate { self?.show("list") } }
@@ -398,6 +437,11 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
                     if r.minY >= (page == "settings" ? 379 : 355) { r.origin.y += dh }
                     if child === scroll { r.size.height = max(40,r.height+dh) }
                 }
+            }
+            if page == "list", !searchVisible, source.minY >= 56, source.minY < 355,
+               source.height != 424, !dialogParts.contains(id) {
+                r.origin.y -= 56
+                if child === scroll { r.size.height += 56 }
             }
             let frame = CGRect(x:r.minX*s,y:r.minY*s,width:r.width*s,height:r.height*s)
             child.frame = child === search ? view.backingAlignedRect(frame,options:.alignAllEdgesNearest) : frame
@@ -651,11 +695,19 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             }
         }
         let glassAvailable = state["glass"] as? Bool == true
-        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","呼出时展开","外观"]
+        let titles = ["语言","快捷键方案","Vim 编辑模式","浮窗大小","外观"]
             + (glassAvailable ? ["玻璃样式"] : [])
             + ["登录时启动","辅助功能权限","配置文件"]
         func rowY(_ title: String) -> CGFloat { CGFloat(57 + (titles.firstIndex(of:title) ?? 0) * 32) }
-        label("Popaste",CGRect(x:370,y:14,width:93,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
+        let brandWidth = textWidth("Popeste",size:11)+4
+        let logo = NSImageView()
+        logo.image = NSImage(size:NSSize(width:26,height:26),flipped:false) { _ in
+            BrandIcon.drawAppIcon(size:26); return true
+        }
+        logo.imageScaling = .scaleProportionallyUpOrDown
+        logo.setAccessibilityLabel("Popeste")
+        add(logo,CGRect(x:463-brandWidth-26,y:15,width:26,height:26))
+        label("Popeste",CGRect(x:463-brandWidth,y:14,width:brandWidth,height:28),size:11,muted:true,align:.right).textColor = InterfacePalette.muted
         for (i,title) in titles.enumerated() {
             let y = CGFloat(57+i*32)
             let labelY = settingsControlY(row:y,height:28)
@@ -695,7 +747,6 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             sizeControl = control
         }
         add(sizeControl,CGRect(x:462-width,y:settingsControlY(row:rowY("浮窗大小"),height:30),width:width,height:30))
-        toggle("expandOnShow",y:rowY("呼出时展开"),value:state["expandOnShow"] as? Bool ?? false)
         select("appearance",options:[("system","跟随系统"),("light","浅色"),("dark","深色")],y:rowY("外观"))
         if glassAvailable {
             select("glassStyle",options:[("regular","磨砂玻璃"),("clear","液态玻璃")],y:rowY("玻璃样式"))

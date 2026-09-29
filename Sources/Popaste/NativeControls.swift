@@ -441,18 +441,9 @@ final class GlassSizeSelector: NSView {
     }
 }
 
-final class TagNameField: NSTextView {
-    var stringValue: String { get { string } set { string = newValue } }
-    override func insertText(_ insertString: Any, replacementRange: NSRange) {
-        let text = (insertString as? NSAttributedString)?.string ?? (insertString as? String ?? "")
-        super.insertText(text.components(separatedBy:.newlines).joined(separator:" "),replacementRange:replacementRange)
-    }
-    override func hitTest(_ point: NSPoint) -> NSView? { isEditable ? super.hitTest(point) : nil }
-}
-final class TagNameScroll: NSScrollView {
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        (documentView as? NSTextView)?.isEditable == true ? super.hitTest(point) : nil
-    }
+final class TagNameField: NSTextField {
+    override class var cellClass: AnyClass? { get { CenteredLabelCell.self } set {} }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 /// A capsule whose trailing edit control expands on hover.
@@ -466,7 +457,6 @@ final class NativeTagPill: NSView, NSDraggingSource {
     private var restingWidth: CGFloat = 0
     private var expansion: CGFloat = 0
     private var hoverActive = false
-    private let textScroll = TagNameScroll()
     private let scale: CGFloat
     override var isFlipped: Bool { true }
     init(name: String, selected: Bool, scale: CGFloat, customColor: String? = nil, choose: @escaping () -> Void) {
@@ -481,17 +471,15 @@ final class NativeTagPill: NSView, NSDraggingSource {
         selectButton.title = ""; selectButton.setAccessibilityLabel(name)
         selectButton.setAccessibilityRole(.radioButton); selectButton.setAccessibilityValue(selected ? 1 : 0)
         field.font = selectButton.font; field.textColor = colors.text
-        field.drawsBackground = false; field.isRichText = false
-        field.textContainerInset = .zero; field.textContainer?.lineFragmentPadding = 0
-        field.textContainer?.widthTracksTextView = false; field.textContainer?.containerSize = NSSize(width:1000000,height:1000)
-        field.isHorizontallyResizable = false; field.isVerticallyResizable = false
-        field.string = name; field.isEditable = false; field.isSelectable = false
-        textScroll.drawsBackground = false; textScroll.borderType = .noBorder; textScroll.documentView = field
+        field.drawsBackground = false; field.isBordered = false; field.focusRingType = .none
+        field.stringValue = name; field.isEditable = false; field.isSelectable = false
+        field.alignment = .center; field.maximumNumberOfLines = 1
+        field.cell?.usesSingleLineMode = true
         editButton.layoutScale = scale; editButton.iconSize = 12
         editButton.inkColor = colors.text; editButton.isHidden = true; editButton.alphaValue = 0
         editButton.setAccessibilityLabel(tr("编辑标签")+" "+name)
         editButton.toolTip = tr("编辑标签")
-        addSubview(selectButton); addSubview(textScroll); addSubview(editButton)
+        addSubview(selectButton); addSubview(field); addSubview(editButton)
         selectButton.dragHandler = { [weak self] event in self?.startDragging(event) }
     }
     required init?(coder:NSCoder) { fatalError() }
@@ -499,9 +487,7 @@ final class NativeTagPill: NSView, NSDraggingSource {
         super.layout(); selectButton.frame = bounds
         let base = restingWidth > 0 ? restingWidth : bounds.width
         editButton.frame = NSRect(x:base-13*scale,y:2*scale,width:24*scale,height:bounds.height-4*scale)
-        let height = field.layoutManager?.defaultLineHeight(for:field.font!) ?? 17*scale
-        textScroll.frame = backingAlignedRect(NSRect(x:10*scale,y:(bounds.height-height)/2,width:max(1,base-18*scale),height:height),options:.alignAllEdgesNearest)
-        field.setFrameSize(textScroll.contentSize)
+        field.frame = NSRect(x:0,y:0,width:base,height:bounds.height)
     }
     deinit { hoverTimer?.invalidate() }
     override func viewDidMoveToWindow() {
