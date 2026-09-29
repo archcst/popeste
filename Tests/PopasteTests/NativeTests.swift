@@ -26,6 +26,7 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         let ew = NSWindow(contentRect:NSRect(x:0,y:0,width:130,height:300),styleMask:.borderless,backing:.buffered,defer:false)
         ew.contentView = e
         e.font = .systemFont(ofSize:17); e.textContainer?.containerSize = NSSize(width:130,height:10000)
+        e.vimPasteboard = NSPasteboard.withUniqueName()
         e.allowsUndo = true; e.vimEnabled = true; e.string = "A👨‍👩‍👧‍👦你好\nsecond line"
         e.cursor(0); _ = e.handleVim(key("l")); assert(e.selectedRange().location == 1)
         _ = e.handleVim(key("l")); assert(e.selectedRange().location == 12)
@@ -48,6 +49,11 @@ final class TagTestPanel: NSPanel { override var canBecomeKey: Bool { true } }
         ui.state = ["scale":1.0,"navigationSchemes":["arrows"],"prompts":[["id":"fixture","body":"test body","pinned":false]]]
         ui.open("new")
         let editor = ui.view.subviews.compactMap { ($0 as? NSScrollView)?.documentView as? NativeEditor }.first!
+        editor.vimEnabled = true; editor.normal = true; editor.string = "visual fixture"; editor.cursor(0)
+        _ = editor.handleVim(key("v"))
+        assert(!ui.handleKey(key("\u{1b}",code:53)))
+        _ = editor.handleVim(key("\u{1b}",code:53)); assert(!editor.isVisual)
+        editor.vimEnabled = false
         editor.string = "unsaved fixture"; ui.textDidChange(Notification(name:NSText.didChangeNotification,object:editor))
         assert(ui.handleKey(key("\u{1b}",code:53)))
         assert(ui.view.subviews.contains { ($0 as? NSTextField)?.stringValue == tr("保存未完成的修改？") })

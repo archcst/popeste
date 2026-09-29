@@ -20,7 +20,7 @@ No account, cloud service, or network connection required.
 
 - **A compact floating picker.** Shows tags and phrases immediately, with search hidden until you type. Press ⌘F to open search or ⌘V to paste a query. Appears above the text cursor when available, with a mouse-position fallback.
 - **Your text, preserved.** Store multiline text, indentation, Unicode, and emoji. Search the full body, pin frequent items, and edit in the same window.
-- **Keyboard navigation.** Choose arrow keys, Emacs, Vim, or a combination. Optional Vim editing supports normal/insert modes, visual-line movement, and undo.
+- **Keyboard navigation.** Choose arrow keys, Emacs, Vim, or a combination. Optional Vim editing supports normal/insert/visual modes, word and wrapped-line movement, clipboard operations, and undo.
 - **Keep the window pinned.** Use the pin beside Settings to keep the window on top across app switches. Esc clears and hides an open search field; a second Esc dismisses the window. Return inserts and dismisses; Ctrl+Return inserts while keeping focus for the next phrase. Reopening retains the pin state.
 - **Native macOS appearance.** Built with Swift and AppKit. Three UI scales, draggable window edges that resize the content area without changing text size, light/dark appearance, and frosted or liquid glass on macOS 26+.
 - **Local storage.** Phrases and preferences live in `~/.config/popeste`, with atomic writes and protection against overwriting invalid data.
@@ -77,7 +77,7 @@ The app pastes text without sending Return or submitting the target form. You ca
 | ⌘Return / ⌃Return | Insert and keep focus for consecutive insertions |
 | Esc | Go back or dismiss; confirm unsaved edits when leaving the editor |
 
-When enabled, Emacs navigation uses **⌃N/P/F/B** and Vim navigation uses **⌃J/K/L/H** for next item, previous item, next tag, and previous tag. Vim editing is a separate, optional setting. In the unsaved-changes dialog, **Return** saves, **N** discards, and **Esc** returns to editing.
+When enabled, Emacs navigation uses **⌃N/P/F/B** and Vim navigation uses **⌃J/K/L/H** for next item, previous item, next tag, and previous tag. Vim editing is a separate, optional setting. Use `v/V` for character/line selection, `y/yy` to copy, `p/P` to paste, `w/b/e` (or `W/B/E`) to move by words, and `d/c` with motions such as `dw`, `d$`, and `cw`. Also supported: `gg/G`, `0/^/$`, `dd/cc`, `x/s/r`, `D/C/Y`, numeric counts, `u`, and `Ctrl+R`. Copy and paste share the macOS clipboard; `⌘C/X/V` work in normal and visual modes. Esc first leaves visual/insert mode or cancels a pending command. In the unsaved-changes dialog, **Return** saves, **N** discards, and **Esc** returns to editing.
 
 Chinese input composition does not trigger filtering until the text is committed. Losing focus hides the picker while preserving the current draft unless the window is pinned.
 

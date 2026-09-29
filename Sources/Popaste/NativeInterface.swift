@@ -167,7 +167,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             parts[index].1.origin.x = 26+textWidth(meta?.stringValue ?? "",size:10)
             modeLabel.frame.origin.x = parts[index].1.origin.x*s
         }
-        modeLabel?.stringValue = editor.vimEnabled ? "Vim · "+tr(editor.normal ? "普通模式" : "插入模式") : ""
+        modeLabel?.stringValue = editor.vimEnabled ? "Vim · "+(editor.isVisual ? "VISUAL" : tr(editor.normal ? "普通模式" : "插入模式")) : ""
     }
     private func save() {
         guard !saving else { return }
@@ -239,7 +239,7 @@ final class NativeInterface: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
             if key == "e", page == "list" || page == "preview" { if let chosen { edit(chosen) }; return true }
             if key == "s", page == "editor" { save(); return true }
         }
-        if page == "editor", editor.vimEnabled && !editor.normal && event.keyCode == 53 { return false }
+        if page == "editor", editor.vimEnabled && editor.consumesEscape && event.keyCode == 53 { return false }
         if event.keyCode == 53 {
             if page == "list", searchVisible {
                 view.window?.makeFirstResponder(view)
